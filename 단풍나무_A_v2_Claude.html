@@ -1,0 +1,1128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<title>단풍나무 굽기</title>
+<style>
+:root{color-scheme:light;--shTop:#3f86c0;--shLow:#6d58b0;--shGround:#8a7f6c;--red:#e0443a;--coral:#ee7a6d}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#d6e3f6}
+body{font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Noto Sans KR",sans-serif;user-select:none;-webkit-user-select:none}
+#sky{position:fixed;inset:0;background:
+ radial-gradient(ellipse 26% 24% at 16% 5%,rgba(255,246,186,.55),rgba(255,248,205,.22) 45%,rgba(255,250,215,0) 72%), /* 해가 저 위 어딘가 있겠거니 싶은 옅은 상큼한 노란빛 */
+ radial-gradient(ellipse 45% 38% at 18% 14%,rgba(196,240,255,.85),rgba(196,240,255,0) 70%),
+ radial-gradient(ellipse 40% 30% at 72% 22%,rgba(206,212,232,.55),rgba(206,212,232,0) 72%),
+ radial-gradient(ellipse 50% 34% at 55% 48%,rgba(214,236,255,.7),rgba(214,236,255,0) 70%),
+ radial-gradient(ellipse 42% 30% at 12% 58%,rgba(214,206,232,.5),rgba(214,206,232,0) 72%),
+ radial-gradient(ellipse 46% 30% at 88% 66%,rgba(232,222,255,.7),rgba(232,222,255,0) 70%),
+ linear-gradient(180deg,#b3e2fb 0%,#cbdefc 45%,#e0d5fb 100%)}
+#weather{position:fixed;inset:0;opacity:0;transition:opacity .9s,filter .9s;pointer-events:none;overflow:hidden}
+#weather.on{opacity:1}
+#weather.ghost{opacity:.5;filter:blur(5px)}
+#overcast{position:absolute;inset:0;background:linear-gradient(180deg,#8fa0b6,#b3bccb);opacity:0;transition:opacity .8s}
+#sunGlow{position:absolute;left:6%;top:4%;width:34vmin;height:34vmin;border-radius:50%;background:radial-gradient(circle,#fffbe8 0%,rgba(255,247,214,.75) 28%,rgba(255,240,205,0) 70%);opacity:0;transition:opacity .8s}
+.cloud{position:absolute;left:0;width:var(--w);height:auto;overflow:visible;animation:drift var(--d) linear infinite;animation-delay:var(--dl)}
+@keyframes drift{from{transform:translateX(-40vw)}to{transform:translateX(120vw)}}
+.drop{position:absolute;top:-6vh;width:2px;height:3.2vh;border-radius:2px;background:linear-gradient(rgba(170,195,235,0),rgba(150,180,230,.75));animation:fall var(--d) linear infinite;animation-delay:var(--dl)}
+@keyframes fall{to{transform:translate(-2vw,112vh)}}
+#hills{position:fixed;left:0;width:100%;pointer-events:none}
+/* 바닥 = 전부 잔디 (그라데이션 + 부드러운 윤곽선의 풀잎 무늬) */
+#ground{position:fixed;left:0;right:0;bottom:0;background-color:#c8ead2;transition:top .7s cubic-bezier(.3,.8,.3,1)}
+#grassEdge{position:fixed;left:0;right:0;background-repeat:repeat-x;background-position:0 100%;pointer-events:none;transition:top .7s cubic-bezier(.3,.8,.3,1)}
+#flutter{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+#flutter svg{position:absolute;left:0;top:0;overflow:visible}
+#stage{position:fixed;left:0;top:0;transform-origin:0 0}
+#stage.L{width:1600px;height:900px}
+#stage.P{width:900px;height:1770px}
+.wtxt{color:#fff;text-shadow:0 0 2px var(--sh),0 0 6px var(--sh),0 2px 5px var(--sh)}
+header{position:absolute;left:0;right:0;text-align:center;--sh:var(--shTop);pointer-events:none;transition:opacity .45s}
+/* 힐링 중에는 맨 위 제목·부제목도 숨겨 나무만 보이게 (버튼 줄은 거의 투명한 채로 남김) */
+.heal header{opacity:0}
+/* 제목·부제목: 흰 글씨 그대로, 넓게 번지던 그림자 대신 얇고 또렷한 진한 하늘색 테두리 */
+header .wtxt{text-shadow:0 0 1px var(--sh),0 0 1px var(--sh),0 1px 2px var(--sh),0 2px 4px rgba(40,90,140,.25)}
+.L header{top:4px}.P header{top:70px}
+h1{margin:0;font-size:64px;font-weight:900;letter-spacing:-1px;line-height:1.15}
+.P h1{font-size:56px}
+#subtitle{margin:10px 0 0;font-size:28px;font-weight:700;min-height:34px}
+h1.pop{animation:pop .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+/* buttons */
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:.35em;font:inherit;font-weight:800;font-size:25px;color:#fff;height:60px;padding:0 28px;border-radius:999px;border:1.5px solid rgba(255,255,255,.8);
+ background:linear-gradient(180deg,rgba(255,255,255,.6) 0%,rgba(255,255,255,.3) 48%,rgba(255,255,255,.16) 52%,rgba(255,255,255,.34) 100%);
+ box-shadow:0 6px 18px rgba(90,80,150,.18),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -6px 12px rgba(255,255,255,.2);
+ -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);text-shadow:0 0 2px var(--sh),0 0 6px var(--sh),0 2px 4px var(--sh);cursor:pointer;transition:transform .15s,filter .2s,opacity .2s;white-space:nowrap;text-align:center}
+.btn::before{content:"";position:absolute;left:12%;right:12%;top:3px;height:40%;border-radius:999px;background:linear-gradient(rgba(255,255,255,.75),rgba(255,255,255,0));pointer-events:none}
+.btn:hover:not(:disabled){filter:brightness(1.1)}
+.btn:active:not(:disabled){transform:scale(.93)}
+.btn.bump{animation:bump .35s}
+@keyframes bump{40%{transform:scale(.9)}75%{transform:scale(1.05)}}
+.btn[hidden]{display:none}
+.btn:disabled{opacity:.42;cursor:not-allowed;filter:grayscale(.3)}
+.btn.warm{--sh:#c46f3f;background:linear-gradient(180deg,rgba(255,225,200,.8) 0%,rgba(255,190,150,.55) 48%,rgba(255,170,130,.42) 52%,rgba(255,196,160,.6) 100%)}
+.btn.help{--sh:#c46f3f;height:46px;font-size:21px;padding:0 20px;background:linear-gradient(180deg,rgba(255,214,186,.92) 0%,rgba(255,180,140,.78) 50%,rgba(255,165,122,.7) 52%,rgba(255,190,152,.85) 100%)}
+.qicon{width:26px;height:26px;flex:none;filter:drop-shadow(0 0 2px #c46f3f)}
+/* help */
+#helpWrap{position:absolute;right:32px;top:26px;z-index:20}
+.P #helpWrap{right:24px;top:22px}
+/* 도움말: 버튼 바로 아래로 가로로 길게 펼침 (아래 슬라이더 창과 겹치지 않게 글자 크기 자동 맞춤) */
+#helpPop{position:absolute;right:0;top:52px;width:max-content;max-width:1536px;background:rgba(255,255,255,.95);border-radius:20px;padding:7px 52px 7px 22px;color:#333;font-size:20px;line-height:1.3;box-shadow:0 12px 30px rgba(90,80,150,.22);transform-origin:top right;animation:popIn .2s ease-out}
+/* 가로로 넓은 창에서도 도움말 창은 슬라이더 창 왼쪽 끝(830px)까지만 늘어남: 1568 - 830 = 738 */
+.L #helpPop{max-width:738px}
+.L #helpPop li{white-space:normal}
+.L #helpPop li{white-space:nowrap} /* 5번 줄은 한 줄로: 그만큼만 도움말 창을 가로로 늘림 */
+.P #helpPop{width:852px;padding:14px 56px 14px 22px}
+#helpPop[hidden]{display:none}
+@keyframes open{from{opacity:0;transform:translateY(-8px) scale(.96)}}
+#helpPop ol{margin:0;padding:0;list-style:none;counter-reset:h;display:flex;flex-direction:column;align-items:flex-start;row-gap:.1em}
+#helpPop li{counter-increment:h;white-space:nowrap;display:grid;grid-template-columns:1.5em auto}
+.P #helpPop li{white-space:normal}
+#helpPop li::before{content:counter(h) ".";font-weight:900;color:#d0743f}
+#helpPop .x{position:absolute;right:8px;top:6px;width:32px;height:32px;border:none;border-radius:50%;background:rgba(0,0,0,.06);font-size:20px;color:#555;cursor:pointer}
+#helpPop .x:hover{background:rgba(0,0,0,.12)}
+#helpPop h4{display:none}
+/* tree */
+#treeArea{position:absolute;width:760px;height:670px;transform-origin:380px 620px;transition:transform .7s cubic-bezier(.3,.8,.3,1)}
+.L #treeArea{left:30px;top:140px}.P #treeArea{left:70px;top:200px}
+.L.heal #treeArea{transform:translateX(390px)}
+.P.heal #treeArea{transform:translateY(520px) scale(1.25)}
+#tree{position:absolute;left:0;top:0;overflow:visible;transition:filter .8s}
+.res #tree{filter:drop-shadow(0 6px 10px rgba(80,70,140,.12)) saturate(1.06)}
+#glow{position:absolute;left:-90px;top:-40px;width:940px;height:760px;border-radius:50%;background:radial-gradient(ellipse at 50% 55%,rgba(255,200,150,.85) 0%,rgba(255,170,120,.45) 38%,rgba(255,170,120,0) 68%);opacity:0;transition:opacity 1s;pointer-events:none}
+#glow.on{animation:breathe 1.4s ease-in-out infinite alternate}
+@keyframes breathe{from{opacity:.5}to{opacity:.95}}
+#haze{position:absolute;left:110px;top:150px;width:540px;height:480px;opacity:0;transition:opacity .8s;pointer-events:none;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 30%,#000 80%,transparent);mask-image:linear-gradient(transparent,#000 30%,#000 80%,transparent)}
+#haze.on{opacity:1}
+#haze svg{position:absolute;bottom:-60px;filter:blur(2.5px);animation:rise var(--d) linear infinite;animation-delay:var(--dl)}
+@keyframes rise{0%{transform:translateY(0) scaleX(1);opacity:0}20%{opacity:.8}50%{transform:translateY(-220px) scaleX(1.4)}100%{transform:translateY(-480px) scaleX(.8);opacity:0}}
+#steam{position:absolute;left:0;top:0;width:760px;height:670px;pointer-events:none}
+.puff{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.95),rgba(255,255,255,.55) 45%,rgba(255,255,255,0) 72%);filter:blur(5px)}
+.cl{transition:opacity .45s,transform .45s;transform-box:fill-box;transform-origin:50% 50%}
+#tree .cl{cursor:pointer}
+/* 다람쥐: 한 화면에 5초 이상 머물면 잠깐 나타나 지평선 근처를 콩콩 뛰어다님 */
+#squirrel{position:absolute;left:0;top:0;width:84px;height:72px;pointer-events:none;opacity:0;z-index:3;will-change:transform,opacity}
+#squirrel .sq-tail{transform-box:fill-box;transform-origin:85% 85%;animation:tailSway .5s ease-in-out infinite alternate}
+@keyframes tailSway{from{transform:rotate(4deg)}to{transform:rotate(-10deg)}}
+.cl.regrow{transition:opacity 1.2s ease-out,transform 1.2s ease-out}
+.pile{transition:opacity .5s .35s}
+#sway{transform-box:view-box;transform-origin:380px 622px}
+#sway.idle{animation:sway 7s ease-in-out infinite;--amp:.5}
+#sway.wind{animation:sway var(--dur) ease-in-out infinite}
+@keyframes sway{0%{transform:rotate(0)}14%{transform:rotate(calc(var(--amp)*-1deg)) skewX(calc(var(--amp)*.4deg))}32%{transform:rotate(calc(var(--amp)*.65deg))}50%{transform:rotate(calc(var(--amp)*-.45deg)) skewX(calc(var(--amp)*-.3deg))}70%{transform:rotate(calc(var(--amp)*1deg))}86%{transform:rotate(calc(var(--amp)*-.3deg))}100%{transform:rotate(0)}}
+/* panels */
+.panel{position:absolute;border-radius:34px;transition:opacity .45s,visibility .45s}
+.L .panel{left:830px;top:160px;width:730px;height:734px}
+.P .panel{left:40px;top:950px;width:820px;height:790px}
+.panel.off{opacity:0;visibility:hidden;pointer-events:none}
+#ctrl{display:flex;flex-direction:column;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(196,184,238,.26));border:1.5px solid rgba(255,255,255,.6);box-shadow:0 10px 30px rgba(100,90,170,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);padding:134px 32px 14px;--sh:var(--shLow)}
+#ctrlTitle{position:absolute;left:0;right:0;top:18px;margin:0;text-align:center;font-size:32px;font-weight:700;--sh:var(--shTop);pointer-events:none}
+/* 창(패널) 안 글씨는 검은색 */
+#ctrl .wtxt,#ctrl .pk-item,#ctrl .pk-unit,#ctrl .btn{color:#26232e;text-shadow:none}
+#ctrl .btn.warm{color:#4a2614}
+/* 창 안 흰 글씨(슬라이더 이름·며칠 질문·단계 이름): 하늘색 그림자를 흐리고 약하게 */
+/* 창 안 글씨는 바탕(하늘·연보라)과 어울리는 남보라 계열: 제목 > 이름·질문 > 부제목 순으로 진하게 */
+#ctrl .sname,#ctrl #qText,#ctrl #ctrlTitle,#ctrl #ctrlSub{text-shadow:0 0 3px rgba(255,255,255,.6),0 0 8px rgba(255,255,255,.35)}
+#ctrl #ctrlTitle,#ctrl .sname,#ctrl #qText{color:#41407a}
+/* 굽기가 끝난 뒤 질문 두 줄과 완료·더 굽기 버튼도 같은 남보라 계열 */
+#ctrl #bAsk .qtext{color:#41407a;text-shadow:0 0 3px rgba(255,255,255,.6)}
+#ctrl #bAsk .qsub{color:#5c5a92;text-shadow:0 0 3px rgba(255,255,255,.6)}
+#ctrl #bAsk .btn{color:#41407a;text-shadow:0 0 3px rgba(255,255,255,.6)}
+#ctrl #ctrlSub{color:#5c5a92}
+#ctrlSub{position:absolute;left:0;right:0;top:64px;margin:0;text-align:center;font-size:21px;font-weight:700;pointer-events:none}
+
+
+#ctrl .pk-band{background:rgba(255,255,255,.55)}
+.shead{display:grid;grid-template-columns:150px 1fr;column-gap:16px;margin-bottom:6px}
+.shead .ticks{grid-column:2}
+.ticks{position:relative;height:46px;font-size:16px;font-weight:700;line-height:1.25}
+.ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap;top:0;text-align:center}
+.ticks b{display:block;font-size:18px;font-weight:900}
+/* 창 안 단계 이름·슬라이더 설명: 바탕(하늘·연보라)과 어울리는 짙은 남보라 */
+#ctrl .shead .ticks{color:#47467a;text-shadow:0 0 3px rgba(255,255,255,.55)}
+#ctrl .sdesc{text-shadow:0 0 3px rgba(255,255,255,.55)}
+#ctrl .sdesc .term{color:#3f3e70}
+#ctrl .sdesc .easy{color:#55548a}
+.srow{display:grid;grid-template-columns:150px 1fr;column-gap:16px;align-items:center;margin-bottom:8px;touch-action:none}
+.touch input[type=range]{height:48px}
+.sname{font-size:27px;font-weight:800;align-self:center;position:relative;cursor:help}
+/* 슬라이더 이름에 마우스를 올리면: 단위의 쉬운 설명 + 짧은 용어 정의 (다른 말풍선과 같은 흰 말풍선) */
+#ctrl .nameTip{left:0;transform:none;bottom:calc(100% + 10px);font-size:17px;font-weight:400;color:#333;text-shadow:none;line-height:1.5;z-index:6}
+#ctrl .nameTip::after{left:28px}
+.nameTip .unit{color:#41407a;font-weight:900}
+.nameTip .def{color:#6a6a78;font-size:15px}
+.sname:hover .nameTip{opacity:1;visibility:visible}
+.sbox{position:relative}
+.sdesc{grid-column:2;line-height:1.25;min-height:42px;position:relative}
+/* 설명은 고른 단계의 손잡이 바로 밑에 뜸 (양 끝 단계는 창 밖으로 안 나가게 손잡이 쪽 끝에 맞춤) */
+.dbox{position:absolute;top:0;white-space:nowrap}
+.sdesc .term{display:block;font-size:15.5px;font-weight:800;color:#3f3e70}
+.sdesc .easy{display:block;font-size:13.5px;font-weight:600;color:#55548a}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:36px;background:transparent;margin:0;cursor:pointer;display:block}
+input[type=range]:disabled{cursor:not-allowed}
+input[type=range]::-webkit-slider-runnable-track{height:12px;border-radius:999px;background:linear-gradient(90deg,#bfe0f3,#d9cff2 50%,#f8d6c5);box-shadow:inset 0 1px 3px rgba(80,70,140,.25)}
+input[type=range]::-moz-range-track{height:12px;border-radius:999px;background:linear-gradient(90deg,#bfe0f3,#d9cff2 50%,#f8d6c5)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:36px;height:36px;margin-top:-12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0%,rgba(255,255,255,.9) 16%,rgba(220,228,255,.6) 55%,rgba(170,176,236,.7) 100%);border:1.5px solid rgba(255,255,255,.95);box-shadow:0 4px 10px rgba(90,80,150,.32),inset 0 -3px 6px rgba(120,120,200,.25);transition:transform .15s}
+input[type=range]::-moz-range-thumb{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0%,rgba(255,255,255,.9) 16%,rgba(220,228,255,.6) 55%,rgba(170,176,236,.7) 100%);border:1.5px solid #fff;box-shadow:0 4px 10px rgba(90,80,150,.32)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.1)}
+#sliders{position:relative;padding:10px 22px 8px}
+#sLock{inset:0!important}
+#sLock{position:absolute;inset:-6px;display:none;cursor:not-allowed;z-index:3}
+.locked #sLock{display:block}
+.locked input[type=range]{opacity:.75}
+#warn{position:absolute;left:50%;top:170px;transform:translateX(-50%);z-index:5;background:rgba(255,255,255,.95);color:var(--red);border:3px solid var(--coral);border-radius:20px;padding:14px 26px;font-size:25px;font-weight:900;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:0 8px 20px rgba(238,122,109,.25)}
+#toast{position:absolute;z-index:30;left:410px;top:636px;transform:translate(-50%,12px);white-space:nowrap;padding:14px 30px;border-radius:999px;font-size:25px;font-weight:900;color:#fff;--sh:#c46f3f;text-shadow:0 0 2px var(--sh),0 0 6px var(--sh),0 2px 4px var(--sh);border:1.5px solid rgba(255,255,255,.85);background:linear-gradient(180deg,rgba(255,214,186,.95) 0%,rgba(255,180,140,.88) 50%,rgba(255,165,122,.85) 52%,rgba(255,190,152,.92) 100%);box-shadow:0 8px 22px rgba(196,111,63,.28),inset 0 1px 0 rgba(255,255,255,.9);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
+.P #toast{left:450px;top:712px}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#warn.show{opacity:1;animation:shake .5s}
+@keyframes shake{0%,100%{transform:translateX(-50%)}20%{transform:translateX(calc(-50% - 10px))}40%{transform:translateX(calc(-50% + 9px))}60%{transform:translateX(calc(-50% - 6px))}80%{transform:translateX(calc(-50% + 4px))}}
+.divider{height:2px;background:rgba(255,255,255,.55);border-radius:2px;margin:6px 0 14px}
+#ctrlLine{position:absolute;left:32px;right:32px;top:110px;margin:0}
+/* 결과 설명 창 맨 위: '반죽을 만들어요!'와 같은 스타일의 제목·부제목·가름선 */
+#expTitle{position:absolute;left:0;right:0;top:18px;margin:0;text-align:center;font-size:32px;font-weight:700;color:#41407a;text-shadow:0 0 3px rgba(255,255,255,.6),0 0 8px rgba(255,255,255,.35)}
+#expSub{position:absolute;left:0;right:0;top:64px;margin:0;text-align:center;font-size:21px;font-weight:700;color:#5c5a92;text-shadow:0 0 3px rgba(255,255,255,.6)}
+#expLine{position:absolute;left:34px;right:34px;top:110px;height:2px;border-radius:2px;background:rgba(110,108,160,.18)}
+.bottom{display:flex;align-items:center;justify-content:space-between;gap:20px;height:150px}
+.bottom[hidden]{display:none}
+.bq{display:flex;flex-direction:column;gap:18px;align-items:flex-start}
+.qtext{font-size:27px;font-weight:800}
+.qsub{font-size:22px;font-weight:700}
+.ask{flex-direction:column;justify-content:center;align-items:center;gap:8px;text-align:center}
+.ask .row{display:flex;gap:18px;margin-top:8px}
+/* picker */
+.picker{position:relative;width:190px;height:162px;border-radius:26px;outline:none;cursor:ns-resize;touch-action:none;flex:none;
+ -webkit-mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent);mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent)}
+.picker:focus-visible{box-shadow:0 0 0 3px rgba(255,255,255,.8)}
+.pk-band{position:absolute;left:10px;right:10px;top:54px;height:54px;border-radius:16px;background:rgba(255,255,255,.35);border:1.5px solid rgba(255,255,255,.75)}
+.pk-list{position:absolute;left:0;right:0;top:0;transition:transform .18s ease-out}
+.pk-list.drag{transition:none}
+.pk-item{height:54px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#fff;text-shadow:0 0 2px var(--sh),0 0 6px var(--sh);opacity:.7;transition:font-size .15s}
+.pk-item.sel{font-size:42px;font-weight:900;opacity:1}
+.pk-unit{position:absolute;right:22px;top:68px;font-size:22px;font-weight:800;color:#fff;text-shadow:0 0 2px var(--sh),0 0 6px var(--sh)}
+.picker.dis{opacity:.5;cursor:not-allowed}
+/* explain */
+#explain{background:rgba(255,255,255,.82);border:1.5px solid rgba(255,255,255,.9);box-shadow:0 10px 30px rgba(100,90,170,.14);padding:132px 34px 22px;color:#2e2e36;overflow:hidden}
+#expIn{font-size:21px;line-height:1.5;word-break:keep-all;text-wrap:pretty} /* 낱말 중간(예: '만들어졌어/요.')에서 줄이 바뀌지 않게, 마지막 줄에 한 글자만 남지 않게 */
+#expIn h3{margin:0 0 .15em;font-size:1.12em;font-weight:900;color:#2a2a33}
+#expIn p{margin:0 0 .7em}
+#expIn ul{margin:0;padding-left:1.2em}
+#expIn li{margin:0 0 .3em}
+#expIn b{font-weight:900;color:#1d1d24;background:linear-gradient(transparent 62%,rgba(247,220,123,.6) 62%)}
+/* result row */
+#resRow{position:absolute;display:flex;justify-content:center;gap:14px;width:760px;--sh:var(--shGround);transition:transform .7s cubic-bezier(.3,.8,.3,1),opacity .45s,visibility .45s}
+.L #resRow{left:30px;top:806px}.P #resRow{left:70px;top:870px}
+.L.heal #resRow{transform:translateX(390px)}
+.P.heal #resRow{transform:translateY(520px)}
+#resRow .btn{height:58px;font-size:23px;padding:0 24px;--sh:rgba(100,104,116,.9);text-shadow:0 0 2px var(--sh),0 0 5px rgba(100,104,116,.65),0 1px 3px rgba(100,104,116,.75)}
+#resRow.off{opacity:0;visibility:hidden}
+.slot{position:relative}
+.tip{position:absolute;bottom:calc(100% + 16px);left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(255,255,255,.96);color:#333;border-radius:16px;padding:10px 18px;font-size:19px;line-height:1.45;box-shadow:0 8px 20px rgba(90,80,150,.2);opacity:0;pointer-events:none;transition:opacity .2s;text-align:center}
+.tip::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);border:9px solid transparent;border-top-color:rgba(255,255,255,.96)}
+.tip strong{color:var(--red);font-weight:900}
+/* 말풍선은 버튼에 마우스를 대고 있을 때만 보임 */
+.tip{visibility:hidden}
+/* 터치 화면(마우스 없음): 마우스 올리기 대신 탭으로 말풍선을 띄움 */
+.touch .tip{opacity:0!important;visibility:hidden!important}
+.touch .tip.show{opacity:1!important;visibility:visible!important}
+/* 모든 팝업(도움말 창·말풍선 4개·저장 메뉴)이 같은 속도로 나타남: 0.2초 동안 부드럽게 */
+@keyframes popIn{from{opacity:0}to{opacity:1}}
+.tip{transition:opacity .2s ease-out!important}
+#saveMenu:not([hidden]){animation:popIn .2s ease-out}
+#healBtn:hover+.tip{opacity:1;visibility:visible}
+#readBtn:hover+.tip{opacity:1;visibility:visible}
+/* 처음 화면에서만: 굽기 버튼에 마우스를 올리면 반죽을 바꿀 수 없다는 안내 */
+.bakeSlot{display:inline-block}
+#ctrl .bakeTip{left:0;transform:none;z-index:8;font-size:19px;color:#333;text-shadow:none;text-align:left}
+#ctrl .bakeTip::after{left:60px}
+.bakeTip .plain{color:#333;font-weight:400}
+#stage:not(.locked) #bakeBtn:hover+.tip{opacity:1;visibility:visible}
+.readTip .plain{color:#333;font-weight:400}
+#healSlot .tip{left:0;transform:none}
+#healSlot .tip::after{left:70px}
+.tip.tipR{left:auto;right:0;transform:none}
+.tip.tipR::after{left:auto;right:110px;transform:translateX(50%)}
+#homeBtn:hover+.tip{opacity:1;visibility:visible}
+.homeTip{background:rgba(255,255,255,.96)}
+.homeTip::after{border-top-color:rgba(255,255,255,.96)}
+.homeTip strong{color:#d8322a}
+.homeTip .wline{color:#333;font-weight:400;text-shadow:none}
+#saveBtn:hover+.tip{opacity:1;visibility:visible}
+#saveMenu:not([hidden])~.tip{opacity:0!important;visibility:hidden!important}
+.plainTip{background:rgba(255,255,255,.96);color:#222;font-weight:400}
+.plainTip .redline{color:#d8322a;font-weight:900}
+#saveMenu{position:absolute;bottom:calc(100% + 14px);left:50%;transform:translateX(-50%);display:flex;gap:10px;padding:10px;border-radius:24px;background:rgba(255,255,255,.4);border:1.5px solid rgba(255,255,255,.8);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 8px 20px rgba(90,80,150,.2)}
+#saveMenu[hidden]{display:none}
+#saveMenu .btn{height:50px;font-size:21px;padding:0 18px}
+/* 나무만·설명 포함: 잔디(민트) 배경과 어울리는 짙은 숲초록 글씨 */
+/* 결과 화면 버튼 줄(힐링하기·설명 보기·이미지 저장·처음으로 돌아가기)과 저장 메뉴: 잔디(민트) 배경과 어울리는 짙은 숲초록 글씨 */
+#resRow .btn,#resRow #saveMenu .btn{color:#2f5d50;text-shadow:0 0 3px rgba(255,255,255,.7)}
+/* 힐링 중(설명 창 닫힘)에는 버튼 줄을 거의 투명하게: 마우스를 올린 버튼, 열린 저장 메뉴는 다시 또렷하게 */
+#resRow .btn{transition:transform .15s,filter .2s,opacity .45s}
+/* 결과 화면 버튼: 뒤 잔디가 뿌옇게 비치지 않게 흐림을 줄이고 더 투명하게 */
+#resRow>.slot>.btn,#resRow>.btn{background:linear-gradient(180deg,rgba(255,255,255,.42) 0%,rgba(255,255,255,.16) 48%,rgba(255,255,255,.06) 52%,rgba(255,255,255,.18) 100%);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);box-shadow:0 4px 12px rgba(90,110,100,.12),inset 0 1px 0 rgba(255,255,255,.9)}
+.heal #resRow .btn{opacity:.15}
+.heal #resRow .btn:hover,.heal #saveMenu:not([hidden]) .btn,.heal #saveMenu:not([hidden])~#saveBtn{opacity:1}
+.spark{animation:spark .55s ease-out forwards;transform-box:fill-box;transform-origin:50% 50%}
+@keyframes spark{0%{transform:scale(0) rotate(0);opacity:0}40%{transform:scale(1.2) rotate(30deg);opacity:1}100%{transform:scale(.2) rotate(70deg);opacity:0}}
+</style>
+</head>
+<body>
+<div id="sky"></div>
+<div id="weather"><div id="overcast"></div><div id="sunGlow"></div><div id="clouds"></div><div id="rain"></div></div>
+<svg id="hills" viewBox="0 0 1600 200" preserveAspectRatio="none"><defs><linearGradient id="hg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4dbff" stop-opacity=".25"/><stop offset=".5" stop-color="#ddd3fd" stop-opacity=".55"/><stop offset="1" stop-color="#d3caf8" stop-opacity=".8"/></linearGradient><linearGradient id="hg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaf8ec"/><stop offset=".5" stop-color="#cdeed8"/><stop offset="1" stop-color="#b4e1c4"/></linearGradient></defs><filter id="hillSmudge" x="-5%" y="-30%" width="110%" height="160%"><feGaussianBlur stdDeviation="7 5"/></filter><path filter="url(#hillSmudge)" d="M0 120 C180 40 330 60 470 110 S760 50 930 95 S1250 40 1600 105 V200 H0Z" fill="url(#hg1)" stroke="#a49de0" stroke-opacity=".06" stroke-width="2" vector-effect="non-scaling-stroke"/><path d="M0 160 C220 105 420 120 600 150 S930 100 1130 140 S1420 110 1600 150 V200 H0Z" fill="url(#hg2)" stroke="#93c7a8" stroke-opacity=".06" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
+<div id="ground"></div>
+<div id="grassEdge"></div>
+<div id="flutter"></div>
+
+<div id="stage" class="L">
+  <header><h1 id="title" class="wtxt">단풍나무 굽기</h1><p id="subtitle" class="wtxt">날씨를 반죽해서 단풍나무를 구워 보세요!</p></header>
+
+  <div id="helpWrap">
+    <button id="helpBtn" class="btn help"><svg class="qicon" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11" fill="none" stroke="#fff" stroke-width="2.6"/><path d="M9.6 10.2a3.5 3.5 0 1 1 5.2 3c-1.2.7-1.8 1.3-1.8 2.6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><circle cx="13" cy="19.3" r="1.6" fill="#fff"/></svg>도움말</button>
+    <div id="helpPop" hidden>
+      <button class="x" id="helpX" aria-label="닫기">✕</button>
+      <h4>도움말</h4>
+      <ol>
+        <li>슬라이더 4개로 기온·바람·햇빛·물을 각각 1~4단계 중에서 고르세요.</li>
+        <li>일수 선택기를 굴려 1~30일 중 며칠 구울지 고르세요.</li>
+        <li>'굽기' 버튼을 누르세요.</li>
+        <li>다 구워지면 '완료'를 누르거나, '더 굽기'로 남은 일수만큼 더 구울 수 있어요!</li>
+        <li>결과 화면에서 '단풍나무 힐링하기', '맞춤 결과 학습하기'를 체험해 보세요.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div id="treeArea">
+    <div id="glow"></div>
+    <svg id="tree" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 670" width="760" height="670"></svg>
+    <div id="haze"></div>
+    <div id="steam"></div>
+  </div>
+
+  <svg id="squirrel" viewBox="0 0 84 72" aria-hidden="true">
+    <defs>
+      <linearGradient id="sqTail" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6c49c"/><stop offset=".55" stop-color="#e3a074"/><stop offset="1" stop-color="#c98560"/></linearGradient>
+      <linearGradient id="sqBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3c39d"/><stop offset="1" stop-color="#d9946a"/></linearGradient>
+    </defs>
+    <g stroke="rgba(120,70,60,.28)" stroke-width="1.2" stroke-linejoin="round">
+      <path class="sq-tail" d="M30 54 C10 54 4 30 14 16 C22 6 40 10 40 24 C40 32 32 34 32 40 C32 46 36 50 38 52 Z" fill="url(#sqTail)"/>
+      <path d="M22 26 C24 20 32 18 34 24" fill="none" stroke="rgba(255,240,225,.7)" stroke-width="2.2" stroke-linecap="round"/>
+      <ellipse cx="46" cy="52" rx="15" ry="12.5" fill="url(#sqBody)"/>
+      <ellipse cx="52" cy="55" rx="7.5" ry="8" fill="#fdebd8" stroke="none"/>
+      <path d="M55 27 L57.5 17.5 L63 26 Z" fill="#e3a074"/>
+      <path d="M56.6 25.5 L57.8 20.5 L60.8 25.5 Z" fill="#f9c7c0" stroke="none"/>
+      <circle cx="60" cy="36" r="11" fill="url(#sqBody)"/>
+      <ellipse cx="66" cy="39.5" rx="5.5" ry="4.2" fill="#fdebd8" stroke="none"/>
+      <circle cx="63.5" cy="34" r="2" fill="#3b2f3d" stroke="none"/><circle cx="64.2" cy="33.3" r=".7" fill="#fff" stroke="none"/>
+      <circle cx="70.2" cy="37.6" r="1.4" fill="#7a4b4b" stroke="none"/>
+      <circle cx="61" cy="40.5" r="2.4" fill="#f7a9a0" opacity=".55" stroke="none"/>
+      <ellipse cx="58" cy="50" rx="3" ry="4.5" fill="#e3a074"/>
+      <ellipse cx="40" cy="63" rx="5" ry="2.6" fill="#d38d63"/><ellipse cx="53" cy="63.5" rx="4.5" ry="2.4" fill="#d38d63"/>
+    </g>
+  </svg>
+  <div id="resRow" class="off">
+    <div class="slot" id="healSlot">
+      <button id="healBtn" class="btn">🍃 힐링하기</button>
+      <div class="tip"><strong>누르면 설명 창이 닫혀요.</strong><br>닫은 뒤에도 📖 설명 보기 버튼으로 다시 열 수 있어요.</div>
+      <button id="readBtn" class="btn" hidden>📖 설명 보기</button><div class="tip readTip"><strong>누르면 설명 창이 다시 생겨요.</strong><br><span class="plain">과학 원리를 학습해 보세요!</span></div>
+    </div>
+    <div class="slot">
+      <div id="saveMenu" hidden><button class="btn" id="saveTree">🌳 나무만</button><button class="btn" id="saveText">📝 설명 포함</button></div>
+      <button id="saveBtn" class="btn">📷 이미지 저장</button><div class="tip plainTip"><span class="redline">맞춤 나무를 저장해 보세요!</span><br>'나무만' 또는 '설명 포함' 중에서 골라 저장할 수 있어요.</div>
+    </div>
+    <div class="slot"><button id="homeBtn" class="btn">🏠 처음으로 돌아가기</button><div class="tip tipR homeTip"><strong>처음으로 돌아가면 기록이 저장되지 않아요!</strong><br><span class="wline">새로운 나무를 구워보시겠어요?</span></div></div>
+  </div>
+
+  <section id="ctrl" class="panel">
+    <p id="ctrlTitle" class="wtxt">반죽을 만들어요!</p>
+    <p id="ctrlSub" class="wtxt">기본 반죽은 우리나라의 평소 가을 날씨예요</p>
+    <div class="divider" id="ctrlLine"></div>
+    <div id="sliders"><div id="sLock"></div></div>
+    <div id="warn">굽는 중에는 반죽을 바꿀 수 없어요.</div>
+    <div class="divider"></div>
+    <div class="bottom" id="bPick">
+      <div class="bq">
+        <div class="qtext wtxt" id="qText">1~30일 중 며칠 구우실 건가요?</div>
+        <span class="slot bakeSlot"><button id="bakeBtn" class="btn warm" disabled>🔥 굽기</button><span class="tip bakeTip"><strong>굽기 시작하면 반죽을 바꿀 수 없어요.</strong><br><span class="plain">마음에 드는 반죽이 준비됐나요?</span></span></span>
+      </div>
+      <div class="picker" id="picker" tabindex="0" aria-label="굽는 일수"><div class="pk-band"></div><div class="pk-list" id="pkList"></div><div class="pk-unit">일</div></div>
+    </div>
+    <div class="bottom ask" id="bAsk" hidden>
+      <div class="qtext wtxt" id="askText">지금 완료해도 좋고, 조금 더 구워도 좋아요</div>
+      <div class="qsub wtxt" id="moreText"></div>
+      <div class="row"><button id="doneBtn" class="btn">✅ 완료</button><button id="moreBtn" class="btn">🔁 더 굽기</button></div>
+    </div>
+  </section>
+
+  <section id="explain" class="panel off">
+    <p id="expTitle">단풍나무가 구워졌어요!</p>
+    <p id="expSub"></p>
+    <div id="expLine"></div>
+    <div id="expIn">
+      <h3>🌤️ 고른 날씨</h3><p id="eWeather"></p>
+      <h3>🍁 단풍 모습</h3><p id="eLook"></p>
+      <h3>💡 한 줄 원리</h3><p id="eOne"></p>
+      <h3>🔬 자세한 과학 원리</h3><ul id="ePrin"></ul>
+    </div>
+  </section>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const NS='http://www.w3.org/2000/svg';
+const svgEl=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+
+/* ================= 데이터 (기획서 그대로) ================= */
+const STEP_LV=['1단계','2단계','3단계','4단계'],STEP_WORD=['아주 적게','조금 적게','조금 많이','아주 많이'];
+const VARS=[
+ {k:'t',name:'🌡️ 기온',unit:['℃','0℃면 물이 얼기 시작하는 온도예요.','물의 어는점 0℃와 끓는점 100℃를 기준으로 한 온도 단위'],terms:[['영하 (0℃ 미만)','물이 얼 만큼 추운 밤'],['0~5℃ 미만','얼지는 않지만 쌀쌀한 밤'],['5~9℃ 미만','평년 10월보다 조금 서늘한 밤'],['9℃ 이상','평년 10월만큼 또는 더 따뜻한 밤']]},
+ {k:'w',name:'🌬️ 바람',unit:['m/s','5m/s면 바람이 1초에 5m 이동해요.','1초 동안 바람이 이동하는 거리를 나타내는 속도 단위'],terms:[['약한 바람 (4m/s 미만)','나뭇잎이 살랑살랑 흔들리는 바람'],['약간 강한 바람 (4~9m/s)','작은 나뭇가지가 흔들리는 바람'],['강한 바람 (9~14m/s)','큰 나뭇가지가 흔들리고 우산 쓰기 힘든 바람'],['매우 강한 바람 (14m/s 이상)','강풍특보가 나올 만큼 센 바람']]},
+ {k:'s',name:'☀️ 햇빛',unit:['%','운량 80%면 하늘의 80%가 구름으로 덮인 상태예요.','전체를 100으로 나타낸 비율 단위'],terms:[['흐림 (구름 90~100%)','하늘이 거의 다 구름으로 덮임'],['구름많음 (60~80%)','하늘의 절반 넘게 구름'],['구름조금 (30~50%)','구름이 조금 낀 하늘'],['맑음 (0~20%)','구름이 거의 없는 하늘']]},
+ {k:'r',name:'💧 물',unit:['SPI','SPI가 0이면 평소 수준의 강수량이에요.','평소 대비 강수량의 많고 적음을 나타내는 지수'],terms:[['심한 건조 (SPI -1.5 이하)','평소보다 비가 아주 많이 모자람'],['건조 (-1.5~-1.0)','평소보다 비가 모자람'],['정상 (-1.0~1.0)','평소만큼 비가 옴'],['습윤 (1.0 이상)','평소보다 비가 많이 옴']]}
+];
+const PHRASE={ // 숫자는 기호(℃·m/s·%·SPI)로 먼저, 그 뒤에 짧은 일상 말
+ t:['0℃ 미만 얼어붙는 밤','0~5℃ 쌀쌀한 밤','5~9℃ 서늘한 밤','9℃ 이상 따뜻한 밤'],
+ w:['4m/s 미만 약한 바람','4~9m/s 바람','9~14m/s 센 바람','14m/s 이상 강풍'],
+ s:['구름 90~100% 흐린 하늘','구름 60~80% 하늘','구름 30~50% 하늘','구름 0~20% 맑은 하늘'],
+ r:['SPI -1.5 이하 아주 메마른 날씨','SPI -1.5~-1.0 메마른 날씨','SPI -1.0~1.0 평소 같은 날씨','SPI 1.0 이상 비 많은 날씨']
+};
+const DEFAULT={t:3,w:1,s:3,r:3};
+const NORMAL={t:3,w:1,r:3};
+const TEMP_SPEED=[4,4,2,1],WIND_MUL=[1.0,1.1,1.2,1.3],WATER_MUL=[1.3,1.15,1.0,0.9],LEAF_FALL=[1,2,4,8];
+const TITLES=[['🌱','초롱초롱'],['☁️','몽글몽글'],['🍞','노릇노릇'],['🍂','알록달록'],['🍁','활활']];
+const LOOK_COLOR=['아직 초록 잎이 대부분이에요.','잎이 노랗게 물들고 있어요.','잎이 노랗게 물들었어요.','노란 잎 위로 붉은빛이 겹쳐 주황빛이에요.','잎이 붉게 물들었어요.'];
+const ONE_LINE=[
+ '추운 날을 아직 충분히 겪지 않아서, 잎이 여름처럼 초록빛이에요.',
+ '선선한 밤이 이어지며 초록빛이 빠지자, 잎에 숨어 있던 노란빛이 드러나기 시작했어요.',
+ '초록빛은 거의 다 빠졌는데 붉은빛은 아직 조금만 들어서, 나무가 노란 잎으로 가득해요.',
+ '초록빛이 절반 넘게 빠지자 붉은빛이 새로 들기 시작해, 노란 잎 위로 주황빛이 번졌어요.',
+ '쌀쌀한 밤과 햇살 좋은 낮이 이어지자 붉은빛이 짙게 들어, 나무가 새빨갛게 물들었어요.'
+];
+const PRIN=[
+ ['P1',(x,s)=>x.chl<20,'아직 **엽록소가 많아** 잎이 초록이에요. 기상청은 잎의 20%가 물들어야 단풍이 시작됐다고 봐요.'],
+ ['P2',(x,s)=>x.chl>=20,'**엽록소가 분해되었어요.** 그래서 1년 내내 잎에 숨어 있던 **노란 색소(카로티노이드)**가 드러났어요.'],
+ ['P2-1',(x,s)=>x.chl>=20&&s.t<=2,'밤 기온이 5℃ 아래로 내려가 **엽록소 분해가 빨라졌어요.**'],
+ ['P3',(x,s)=>s.t===4,'밤이 9℃ 이상으로 따뜻하면 **단풍이 늦게 들어요.**'],
+ ['P4',(x,s)=>s.w>=2,'바람이 강하면 **잎의 노화가 빨라지고**, 엽록소가 거의 없어진 잎은 떨어져요.'],
+ ['P5',(x,s)=>x.red>0,'엽록소가 절반 넘게 줄자 **붉은 색소(안토시아닌)가 새로 만들어졌어요.**'],
+ ['P6',(x,s)=>x.red>0&&s.s>=3,'햇빛이 많아 **붉은 색소가 빨리 늘었어요.**'],
+ ['P7',(x,s)=>x.chl>50&&s.s<=2&&x.red<30,'햇빛이 적어 **붉은 색소가 적게 생겼어요.** 그래서 노란빛이 더 남았어요.'],
+ ['P8-1',(x,s)=>s.r<=2,'비가 모자라면 **잎의 노화가 빨라져요.**'],
+ ['P8-2',(x,s)=>s.r===4,'비가 많으면 **잎의 노화가 늦어져요.**'],
+ ['P9',(x,s)=>x.red>=30,'**붉은 색소가 노란 색소 위에 겹쳐서**, 단풍나무는 노란 단계가 짧고 주황을 거쳐 빨강으로 보여요.']
+];
+
+/* ================= 계산 (기획서 수식) ================= */
+function interp(arr,x){const lo=Math.floor(x),hi=Math.ceil(x);const a=arr[lo-1],b=arr[hi-1];return a+(b-a)*(x-lo);}
+function params(sel){
+  const tS=sel.t*0.75+NORMAL.t*0.25,wS=sel.w*0.75+NORMAL.w*0.25,rS=sel.r*0.75+NORMAL.r*0.25;
+  return {d:interp(TEMP_SPEED,tS)*interp(WIND_MUL,wS)*interp(WATER_MUL,rS),S:sel.s,f:interp(LEAF_FALL,wS)};
+}
+function stateAt(p,D){
+  if(D<=0)return {chl:0,red:0,leaves:100};
+  return {
+    chl:Math.min(100,p.d*D),
+    red:Math.min(100,Math.max(0,D-(Math.floor(50/p.d)+1)+1)*p.S),
+    leaves:Math.max(0,100-Math.max(0,D-Math.ceil(80/p.d)+1)*p.f)
+  };
+}
+function category(x){if(x.chl<20)return 0;if(x.red>=60)return 4;if(x.red>=30)return 3;if(x.chl>=80)return 2;return 1;}
+function hasBatchim(word){const c=word.charCodeAt(word.length-1)-0xAC00;if(c<0||c>11171)return {has:false,rieul:false};const j=c%28;return {has:j!==0,rieul:j===8};}
+function ro(word){const b=hasBatchim(word);return (!b.has||b.rieul)?'로':'으로';}
+function weatherSentence(sel,N){const water=PHRASE.r[sel.r-1];return `${PHRASE.t[sel.t-1]}, ${PHRASE.w[sel.w-1]}, ${PHRASE.s[sel.s-1]}, ${water}${ro(water)} 총 ${N}일 구웠어요.`;}
+function lookSentence(x){const c=category(x);let s=LOOK_COLOR[c];if(x.chl>=80)s+=' 단풍이 절정이에요.';s+=' '+(x.leaves>=90?'잎이 거의 다 남아 있어요.':x.leaves>=50?'잎이 조금씩 떨어졌어요.':'잎이 많이 떨어졌어요.');return s;}
+function principles(x,sel){return PRIN.filter(p=>p[1](x,sel)).map(p=>({id:p[0],text:p[2]}));}
+function titleOf(x){const t=TITLES[category(x)];return {text:`${t[0]} ${t[1]} 단풍나무 ${t[0]}`,plain:`${t[1]}단풍나무`};}
+const richHTML=s=>s.split('**').map((seg,i)=>i%2?`<b>${seg}</b>`:seg).join('');
+
+/* ================= 색 ================= */
+const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+const css=c=>`rgb(${c.map(v=>Math.round(Math.max(0,Math.min(255,v)))).join(',')})`;
+// 초록 잎: 아까의 밝은 초록(#8fd68a)과 차분한 초록(#9ccb97)의 딱 중간 + 잎 한 장 안에서 두 색이 그라데이션으로 섞임
+const GREEN_BRIGHT=hex('#8fd68a'),GREEN_CALM=hex('#9ccb97');
+const GREEN=hex('#8cd682'),YELLOW=hex('#ffd95e'),RED=hex('#ff7566');
+const WHITE=[255,255,255],DARK=[120,60,90];
+function leafColor(x){const base=mix(GREEN,YELLOW,x.chl/100);return mix(base,RED,x.red/100);}
+
+/* ================= 나무 그리기 (언제나 같은 모양) ================= */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const MAPLE='M0,-13 L2.4,-6.6 L6,-8.6 L4.9,-3.2 L11.5,-5.2 L9,-0.6 L12.4,1.6 L5.6,3.4 L7,7.2 L1.2,5 L0.6,12 L-0.6,12 L-1.2,5 L-7,7.2 L-5.6,3.4 L-12.4,1.6 L-9,-0.6 L-11.5,-5.2 L-4.9,-3.2 L-6,-8.6 L-2.4,-6.6 Z';
+const TREE=$('tree');
+const CL=[],PILE=[];const PAINT={};let crownTop=200;
+function buildTree(){
+  const R=mulberry32(1112);
+  const defs=svgEl('defs',{},TREE);
+  svgEl('path',{id:'maple',d:MAPLE},defs);
+  const bark=svgEl('linearGradient',{id:'bark',x1:0,y1:0,x2:1,y2:0},defs);
+  [['0','#ecd6c0'],['.45','#cdaa8c'],['1','#a07e66']].forEach(([o,c])=>svgEl('stop',{offset:o,'stop-color':c},bark));
+  const solid=id=>{const g=svgEl('linearGradient',{id},defs);PAINT[id]=[svgEl('stop',{offset:0},g),svgEl('stop',{offset:1},g)];};
+  ['cStroke','cFill','cShadow','pv0','pv1','pv2'].forEach(solid);
+  { const g=svgEl('radialGradient',{id:'lgSun',cx:.35,cy:.3,r:.75},defs);PAINT.lgSun=[svgEl('stop',{offset:0,'stop-opacity':.85},g),svgEl('stop',{offset:.55,'stop-opacity':.35},g),svgEl('stop',{offset:1,'stop-opacity':0},g)]; }
+  for(let v=0;v<3;v++){
+    const g=svgEl('linearGradient',{id:'lg'+v,x1:.1,y1:.05,x2:.9,y2:.95},defs);
+    PAINT['lg'+v]=[svgEl('stop',{offset:0},g),svgEl('stop',{offset:.55},g),svgEl('stop',{offset:1},g)];
+  }
+  // 가지
+  const segs=[],nodes=[];
+  function grow(x,y,ang,len,w,depth){
+    let ex=x+Math.sin(ang)*len,ey=y-Math.cos(ang)*len;
+    for(let k=0;k<4&&(ex<70||ex>690||ey<60);k++){ang*=0.55;ex=x+Math.sin(ang)*len;ey=y-Math.cos(ang)*len;}
+    const bend=(R()-0.5)*0.7,px=Math.cos(ang),py=Math.sin(ang);
+    const cx=(x+ex)/2+px*len*bend*0.35,cy=(y+ey)/2+py*len*bend*0.35;
+    const w2=Math.max(1.6,w*(0.6+R()*0.1));
+    segs.push({x,y,ex,ey,cx,cy,w,w2});
+    if(depth>=5){nodes.push({x:ex,y:ey,tip:true});return;}
+    if(depth>=2)nodes.push({x:ex,y:ey,tip:false});
+    const n=depth===0?3:(R()<0.5?2:3),mid=(n-1)/2;
+    for(let i=0;i<n;i++){
+      let a=ang+(i-mid)*(0.5+R()*0.38)+(R()-0.5)*0.32;
+      a=Math.max(-1.35,Math.min(1.35,a));
+      grow(ex,ey,a,len*(0.74+R()*0.2),w2*(Math.abs(i-mid)<0.6?1:0.8),depth+1);
+    }
+  }
+  grow(380,622,-0.05,120,58,0);
+  const sway=svgEl('g',{id:'sway',class:'idle'},TREE);
+  const brG=svgEl('g',{},sway);
+  for(const s of segs){
+    const dx=s.ex-s.x,dy=s.ey-s.y,L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L;
+    const a=s.w/2,b=s.w2/2,m=(a+b)/2;
+    const d=`M${s.x+nx*a},${s.y+ny*a} Q${s.cx+nx*m},${s.cy+ny*m} ${s.ex+nx*b},${s.ey+ny*b} L${s.ex-nx*b},${s.ey-ny*b} Q${s.cx-nx*m},${s.cy-ny*m} ${s.x-nx*a},${s.y-ny*a}Z`;
+    svgEl('path',{d,fill:'url(#bark)'},brG);
+    svgEl('circle',{cx:s.ex,cy:s.ey,r:b,fill:'#c8a587'},brG);
+  }
+  // 잎 덩어리
+  const blobs=[];
+  for(const n of nodes){
+    if(blobs.some(b=>Math.hypot(b.x-n.x,b.y-n.y)<20))continue;
+    blobs.push({x:n.x+(R()-0.5)*14,y:n.y+(R()-0.5)*14,r:n.tip?34+R()*18:42+R()*16});
+  }
+  const tips=nodes.filter(n=>n.tip);
+  for(let i=0;i<2;i++){const a=tips[Math.floor(R()*tips.length)],b=tips[Math.floor(R()*tips.length)];blobs.push({x:(a.x+b.x)/2+(R()-0.5)*30,y:(a.y+b.y)/2+(R()-0.5)*30,r:40+R()*14});}
+  const mx=blobs.reduce((s,b)=>s+b.x,0)/blobs.length,my=blobs.reduce((s,b)=>s+b.y,0)/blobs.length;
+  blobs.forEach(b=>{b.dist=Math.hypot(b.x-mx,(b.y-my)*1.15);});
+  const maxD=Math.max(...blobs.map(b=>b.dist));
+  blobs.sort((p,q)=>p.dist-q.dist);
+  crownTop=Math.min(...blobs.map(b=>b.y-b.r));
+  const leafG=svgEl('g',{},sway);const HR=mulberry32(4242);
+  const order=blobs.map((_,i)=>i);for(let i=order.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  blobs.forEach((b,i)=>{
+    const g=svgEl('g',{class:'cl'},leafG);
+    // 잎 덩어리 = 단풍잎 여러 장 (뒤: 그림자 잎, 가운데: 어두운 잎, 앞: 밝은 잎)
+    const leaf=(x,y,sc,rot,fill,extra)=>svgEl('use',Object.assign({href:'#maple',transform:`translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${Math.round(rot)}) scale(${sc.toFixed(2)})`,fill},extra||{}),g);
+    for(let k=0;k<1;k++){const a=R()*6.28,rr=R()*b.r*0.4;leaf(b.x+3+Math.cos(a)*rr,b.y+5+Math.sin(a)*rr,b.r/15,R()*360,'url(#cShadow)',{opacity:.1});}
+    const layers=[[1,0.55,'url(#lg0)',b.r/17],[1,0.35,`url(#lg${1+Math.floor(R()*2)})`,b.r/19]];
+    for(const [cnt,spread,fill,sc] of layers){
+      for(let k=0;k<cnt;k++){
+        const a=R()*6.28,rr=Math.sqrt(R())*b.r*spread;
+        leaf(b.x+Math.cos(a)*rr,b.y+Math.sin(a)*rr,sc*(0.85+R()*0.3),(R()-0.5)*80,fill,{stroke:'url(#cStroke)','stroke-width':.9,'stroke-opacity':.22,'stroke-linejoin':'round','vector-effect':'non-scaling-stroke'});
+      }
+    }
+    if(b.dist/maxD>0.6){
+      const dir=Math.atan2(b.y-my,b.x-mx),cnt=1;
+      for(let k=0;k<cnt;k++){
+        const a=dir+(k?0.7:-0.2)*(R()+0.3);
+        svgEl('use',{href:'#maple',transform:`translate(${(b.x+Math.cos(a)*b.r*0.78).toFixed(1)},${(b.y+Math.sin(a)*b.r*0.78).toFixed(1)}) rotate(${Math.round(a*57.3+90)}) scale(${(1.1+R()*0.6).toFixed(2)})`,fill:'url(#lg2)',stroke:'url(#cStroke)','stroke-width':1,'stroke-opacity':.3,'stroke-linejoin':'round','vector-effect':'non-scaling-stroke'},g);
+      }
+    }
+    // 햇빛 하이라이트: 해가 있는 왼쪽 위 방향 잎 덩어리 몇 군데에 햇살 받은 밝은 잎 (나무 모양은 그대로, 별도 난수)
+    if(b.y<my-10&&b.x<mx+90&&b.dist/maxD>0.3&&HR()<0.6){
+      for(let k=0;k<2;k++){const a=-2.3+(HR()-.5)*0.9,rr=b.r*(0.25+HR()*0.25);
+        svgEl('use',{href:'#maple',transform:`translate(${(b.x+Math.cos(a)*rr).toFixed(1)},${(b.y+Math.sin(a)*rr).toFixed(1)}) rotate(${Math.round((HR()-.5)*70)}) scale(${(b.r/21*(0.85+HR()*0.3)).toFixed(2)})`,fill:'url(#lgSun)',opacity:(0.45+HR()*0.25).toFixed(2)},g);}
+    }
+    CL.push({g,x:b.x,y:b.y,r:b.r,rank:order.indexOf(i),shown:true});
+  });
+  // 바닥에 쌓이는 잎 (고르게 흩어지도록 반 데르 코르풋 순서)
+  const pileG=svgEl('g',{},TREE);
+  const vdc=n=>{let v=0,den=1;while(n){den*=2;v+=(n&1)/den;n>>=1;}return v;};
+  for(let i=1;i<=96;i++){
+    const x=110+vdc(i)*540+(R()-0.5)*14,y=612+R()*42;
+    const el=svgEl('use',{href:'#maple',class:'pile',transform:`translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${Math.round(R()*360)}) scale(${(0.8+R()*0.45).toFixed(2)}, ${(0.55+R()*0.2).toFixed(2)})`,fill:`url(#lg${i%3})`,stroke:'url(#cStroke)','stroke-width':.8,'stroke-opacity':.22,style:'opacity:0'},pileG);
+    PILE.push(el);
+  }
+  svgEl('g',{id:'fallG'},TREE);svgEl('g',{id:'sparkG'},TREE);
+}
+function setStops(id,cols){PAINT[id].forEach((s,i)=>s.setAttribute('stop-color',css(cols[Math.min(i,cols.length-1)])));}
+let lastColor='',lastChl=0,curState={chl:0,red:0,leaves:100};
+function paintTree(c){
+  // 초록이 남아 있는 만큼, 잎의 밝은 쪽은 밝은 초록 쪽으로, 어두운 쪽은 차분한 초록 쪽으로 살짝 당김
+  const gk=Math.max(0,1-(lastChl||0)/100)*0.6,hi=mix(c,GREEN_BRIGHT,gk),lo=mix(c,GREEN_CALM,gk);
+  setStops('lg0',[mix(hi,WHITE,.28),mix(c,DARK,.06),mix(lo,DARK,.3)]);
+  setStops('lg1',[mix(hi,WHITE,.38),c,mix(lo,DARK,.24)]);
+  setStops('lg2',[mix(hi,WHITE,.48),mix(c,WHITE,.1),mix(lo,DARK,.18)]);
+  setStops('lgSun',[mix(hi,[255,250,215],.55),mix(hi,[255,250,215],.3),mix(hi,WHITE,.15)]);
+  setStops('cStroke',[mix(c,DARK,.3)]);
+  setStops('cFill',[mix(c,WHITE,.22)]);
+  setStops('cShadow',[mix(c,DARK,.6)]);
+  setStops('pv0',[mix(c,DARK,.08)]);setStops('pv1',[mix(c,DARK,.2)]);setStops('pv2',[mix(c,WHITE,.15)]);
+}
+function applyState(x,animate){
+  const c=leafColor(x),key=css(c);
+  lastChl=x.chl;curState=x;paintTree(c);
+  if(animate&&key!==lastColor)sparkle();
+  lastColor=key;
+  const vis=Math.round(CL.length*x.leaves/100);
+  CL.forEach(cl=>{
+    const show=cl.rank<vis;
+    if(show!==cl.shown){
+      cl.shown=show;cl.g.style.opacity=show?'1':'0';cl.g.style.transform=show?'':'translateY(16px) scale(.6)';
+      if(!show&&animate)dropLeaf(cl,c);
+    }
+  });
+  const pn=Math.round(PILE.length*(100-x.leaves)/100);
+  PILE.forEach((p,i)=>{p.style.opacity=i<pn?'1':'0';});
+}
+function sparkle(){
+  const g=$('sparkG');const shown=CL.filter(c=>c.shown);if(!shown.length)return;
+  for(let i=0;i<4;i++){
+    const c=shown[Math.floor(Math.random()*shown.length)];
+    const s=svgEl('path',{d:'M0,-9 L1.8,-1.8 L9,0 L1.8,1.8 L0,9 L-1.8,1.8 L-9,0 L-1.8,-1.8Z',fill:'#fffbea',class:'spark',transform:`translate(${(c.x+(Math.random()-.5)*c.r).toFixed(1)},${(c.y+(Math.random()-.5)*c.r).toFixed(1)})`},g);
+    setTimeout(()=>s.remove(),600);
+  }
+}
+function dropLeaf(cl,c){
+  const g=$('fallG');
+  for(let k=0;k<2;k++){
+    const holder=svgEl('g',{transform:`translate(${cl.x.toFixed(1)},${cl.y.toFixed(1)})`},g);
+    const u=svgEl('use',{href:'#maple',fill:'url(#lg1)',stroke:css(mix(c,DARK,.3)),'stroke-width':.9,'stroke-opacity':.3},holder);
+    const tx=110+Math.random()*540-cl.x,ty=625+Math.random()*30-cl.y,sw=(Math.random()-.5)*60;
+    u.animate([{transform:'translate(0,0) rotate(0deg)',opacity:1},{transform:`translate(${tx/2+sw}px,${ty/2}px) rotate(200deg)`,opacity:1,offset:.5},{transform:`translate(${tx}px,${ty}px) rotate(400deg)`,opacity:0}],{duration:1100+Math.random()*500,easing:'ease-in'}).onfinish=()=>holder.remove();
+  }
+}
+function setSway(mode,wind){
+  const s=$('sway');
+  if(mode==='wind'){const amp=[0.8,1.8,2.8,4][wind-1],dur=[5.5,3.4,2.3,1.5][wind-1];s.style.setProperty('--amp',amp);s.style.setProperty('--dur',dur+'s');s.setAttribute('class','wind');}
+  else{s.style.removeProperty('--amp');s.setAttribute('class','idle');}
+}
+
+/* ================= 굽기 연출 ================= */
+function buildHaze(){
+  const h=$('haze');
+  for(let i=0;i<8;i++){
+    const s=document.createElementNS(NS,'svg');s.setAttribute('viewBox','0 0 40 300');s.setAttribute('width','40');s.setAttribute('height','300');
+    s.style.left=(20+i*64+(i%2)*14)+'px';s.style.setProperty('--d',(2.2+(i%3)*0.5)+'s');s.style.setProperty('--dl',(-i*0.37)+'s');
+    svgEl('path',{d:'M20,300 C4,260 36,230 20,190 S4,120 20,80 S36,20 20,0',fill:'none',stroke:'rgba(255,255,255,.6)','stroke-width':7,'stroke-linecap':'round'},s);
+    h.appendChild(s);
+  }
+}
+let steamTimer=null;
+function steam(ms){
+  clearInterval(steamTimer);const box=$('steam');const end=performance.now()+ms;
+  const one=()=>{
+    const p=document.createElement('div');p.className='puff';const sz=50+Math.random()*50;
+    p.style.width=p.style.height=sz+'px';p.style.left=(230+Math.random()*280)+'px';p.style.top=(crownTop+10+Math.random()*40)+'px';
+    box.appendChild(p);
+    const dx=(Math.random()-.5)*70;
+    p.animate([{transform:'translate(0,0) scale(.6)',opacity:0},{transform:`translate(${dx}px,-70px) scale(1.1)`,opacity:.9,offset:.35},{transform:`translate(${-dx}px,-170px) scale(1.7)`,opacity:0}],{duration:2000,easing:'ease-out'}).onfinish=()=>p.remove();
+  };
+  one();steamTimer=setInterval(()=>{if(performance.now()>end){clearInterval(steamTimer);return;}one();one();},220);
+}
+
+/* ================= 날씨 배경 ================= */
+/* 구름: 둥근 덩어리 여러 개 + 위는 밝고 아래는 살짝 어두운 그라데이션 + 부드러운 윤곽선 */
+let cloudId=0;
+function cloudSVG(sun,R){
+  const s=document.createElementNS(NS,'svg');s.setAttribute('viewBox','0 0 200 90');s.setAttribute('class','cloud');
+  const id='cg'+(cloudId++),top=sun===1?'#f4f6fa':'#ffffff',mid=sun===1?'#e1e6ef':sun===2?'#eef1f9':'#f6f7ff',bot=sun===1?'#bcc6d6':sun===2?'#d3daeb':'#dcdcf6',edge=sun===1?'#9eabc0':'#b7bde0';
+  const lg=svgEl('linearGradient',{id,x1:0,y1:15,x2:0,y2:85,gradientUnits:'userSpaceOnUse'},svgEl('defs',{},s));
+  [[0,top],[.55,mid],[1,bot]].forEach(([o,c])=>svgEl('stop',{offset:o,'stop-color':c},lg));
+  const puffs=[[48,60,24],[80,46,30],[118,40,34],[152,56,26],[100,64,24],[66,66,20],[136,66,20]].map(([x,y,r])=>[x+(R()-.5)*8,y+(R()-.5)*6,r*(0.88+R()*0.24)]);
+  const out=svgEl('g',{fill:'none',stroke:edge,'stroke-opacity':.14,'stroke-width':2},s),inn=svgEl('g',{fill:`url(#${id})`},s);
+  for(const [x,y,r] of puffs){svgEl('circle',{cx:x,cy:y,r},out);svgEl('circle',{cx:x,cy:y,r},inn);}
+  svgEl('rect',{x:40,y:58,width:120,height:28,rx:14},out);
+  svgEl('rect',{x:40,y:58,width:120,height:28,rx:14},inn);
+  return s;
+}
+/* 잔디 무늬: 풀잎마다 그라데이션 + 부드러운 윤곽선 (그림 파일 없이 코드로 만든 SVG) */
+function grassTile(w,h,count,seed,baseY){
+  // 둥근 끝의 통통한 풀잎 2~4장이 모인 몽글몽글한 풀 무더기를, 크기·자리·간격을 제각각 불규칙하게 둠
+  const R=mulberry32(seed);let blades='';
+  for(let i=0;i<count;i++){
+    if(R()<0.3)continue;
+    const x=14+R()*(w-28),y=baseY?baseY:18+R()*(h-24),big=0.65+R()*0.75,n=2+Math.floor(R()*3);
+    for(let k=0;k<n;k++){
+      const bx=x+(k-(n-1)/2)*5.5*big,hh=((baseY?15:10)+R()*(baseY?10:7))*big,dx=(k-(n-1)/2)*3.2*big+(R()-.5)*2,wd=(3+R()*1.6)*big;
+      blades+=`<path d="M${(bx-wd).toFixed(1)},${y.toFixed(1)} C${(bx-wd).toFixed(1)},${(y-hh*.7).toFixed(1)} ${(bx+dx-wd*.75).toFixed(1)},${(y-hh).toFixed(1)} ${(bx+dx).toFixed(1)},${(y-hh).toFixed(1)} C${(bx+dx+wd*.75).toFixed(1)},${(y-hh).toFixed(1)} ${(bx+wd).toFixed(1)},${(y-hh*.7).toFixed(1)} ${(bx+wd).toFixed(1)},${y.toFixed(1)}Z" fill="url(#gb${k%2})"/>`;
+    }
+  }
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="gb0" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1fcee"/><stop offset=".5" stop-color="#c3ead0"/><stop offset="1" stop-color="#9ed3b4"/></linearGradient><linearGradient id="gb1" x1="0" y1="0" x2=".6" y2="1"><stop offset="0" stop-color="#e8f9ec"/><stop offset=".55" stop-color="#b6e3c8"/><stop offset="1" stop-color="#93cbad"/></linearGradient></defs><g stroke="#86bfa2" stroke-opacity=".32" stroke-width=".9" stroke-linejoin="round">${blades}</g></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+const GRASS_FIELD=grassTile(460,300,9,77,0),GRASS_EDGE=grassTile(520,34,9,33,32);
+const GRASS_GRAD='linear-gradient(180deg,#e2f6e2 0%,#d0eed6 20%,#c1e7cc 60%,#b3dfc3 100%)';
+function buildWeather(sel){
+  const clouds=$('clouds'),rain=$('rain');clouds.innerHTML='';rain.innerHTML='';
+  $('overcast').style.opacity=[.5,.28,.08,0][sel.s-1];
+  $('sunGlow').style.opacity=[0,.15,.55,1][sel.s-1];
+  const n=[10,7,3,1][sel.s-1],dur=[70,46,30,18][sel.w-1],R=mulberry32(sel.s*10+sel.w);
+  for(let i=0;i<n;i++){
+    const c=cloudSVG(sel.s,R);
+    const w=(sel.s<=2?18:13)+R()*12;
+    c.style.setProperty('--w',w+'vw');c.style.top=(4+R()*36)+'vh';
+    const d=dur*(0.8+R()*0.4);c.style.setProperty('--d',d+'s');c.style.setProperty('--dl',(-R()*d)+'s');
+    clouds.appendChild(c);
+  }
+  if(sel.r===4)for(let i=0;i<80;i++){const d=document.createElement('div');d.className='drop';d.style.left=(Math.random()*104)+'vw';d.style.setProperty('--d',(0.8+Math.random()*0.5)+'s');d.style.setProperty('--dl',(-Math.random()*1.3)+'s');rain.appendChild(d);}
+  const gray=sel.s<=2;
+  document.documentElement.style.setProperty('--shTop',gray?'#56677d':'#3f86c0');
+  document.documentElement.style.setProperty('--shLow',gray?'#5a6582':'#6d58b0');
+}
+function setWeather(mode){const w=$('weather');w.classList.toggle('on',mode!=='off');w.classList.toggle('ghost',mode==='ghost');
+  if(mode==='off'){document.documentElement.style.setProperty('--shTop','#3f86c0');document.documentElement.style.setProperty('--shLow','#6d58b0');}}
+
+/* ================= 흩날리는 단풍잎 ================= */
+function flutter(){
+  // 초록(초롱초롱) 나무에서는 잎이 떨어지지 않고, 단풍이 든 나무에서는 지금 나뭇잎 색에 맞춘 잎이 떨어짐
+  if(!document.hidden&&curState.chl>=20&&CL.some(cl=>cl.shown)){
+    const f=$('flutter'),base=leafColor(curState),v=Math.random(),c=css(v<.33?mix(base,WHITE,.18):v<.66?base:mix(base,DARK,.12)).replace(/rgb\((\d+),(\d+),(\d+)\)/,(m,r,g,b)=>'#'+[r,g,b].map(n=>(+n).toString(16).padStart(2,'0')).join(''));
+    const s=document.createElementNS(NS,'svg');s.setAttribute('width','30');s.setAttribute('height','30');s.setAttribute('viewBox','-15 -15 30 30');
+    const gid='fg'+Math.random().toString(36).slice(2,8),lgd=svgEl('linearGradient',{id:gid,x1:.1,y1:.05,x2:.9,y2:.95},svgEl('defs',{},s));[[0,mix(hex(c),WHITE,.4)],[.55,hex(c)],[1,mix(hex(c),DARK,.25)]].forEach(([o,col])=>svgEl('stop',{offset:o,'stop-color':css(col)},lgd));
+    svgEl('path',{d:MAPLE,fill:`url(#${gid})`,stroke:css(mix(hex(c),DARK,.3)),'stroke-width':.9,'stroke-opacity':.3},s);f.appendChild(s);
+    // 나무 잎 덩어리 아래쪽에서 떨어져 나무 밑 바닥에 내려앉음
+    const tr=TREE.getBoundingClientRect(),sx=tr.width/760,sy=tr.height/670;
+    const x0=tr.left+(120+Math.random()*520)*sx-15,y0=tr.top+(crownTop+150+Math.random()*120)*sy-15;
+    const yEnd=parseFloat($('ground').style.top)+(6+Math.random()*24)*sy-15;
+    const drift=(Math.random()-.5)*140*sx,sc=Math.max(.5,sx*1.1);
+    s.animate([{transform:`translate(${x0}px,${y0}px) rotate(0) scale(${sc})`,opacity:0},{transform:`translate(${x0+drift*.5}px,${y0+(yEnd-y0)*.4}px) rotate(160deg) scale(${sc})`,opacity:.95,offset:.25},{transform:`translate(${x0-drift*.2}px,${y0+(yEnd-y0)*.75}px) rotate(300deg) scale(${sc})`,opacity:.95,offset:.65},{transform:`translate(${x0+drift}px,${yEnd}px) rotate(420deg) scale(${sc})`,opacity:.9,offset:.9},{transform:`translate(${x0+drift}px,${yEnd}px) rotate(420deg) scale(${sc})`,opacity:0}],{duration:4500+Math.random()*2500,easing:'ease-in-out'}).onfinish=()=>s.remove();
+  }
+  setTimeout(flutter,2500+Math.random()*3000);
+}
+
+/* ================= 화면 크기 맞추기 ================= */
+const stage=$('stage');let K=1,PORTRAIT=false;
+function groundStageY(){return PORTRAIT?(stage.classList.contains('heal')?1330:810):760;}
+function layout(){
+  const vw=innerWidth,vh=innerHeight;PORTRAIT=vw<vh;
+  stage.classList.toggle('P',PORTRAIT);stage.classList.toggle('L',!PORTRAIT);
+  const W=PORTRAIT?900:1600,H=PORTRAIT?1770:900;
+  // 위아래 여백: 화면 비율이 16:9처럼 꽉 차도 위·아래에 각각 36px(화면 크기에 맞춰 함께 커지고 작아짐)만큼 숨 쉴 자리를 남김
+  // 가로 화면(전체 화면·16:9 등)에서는 위아래 여백을 넉넉히 두어 전체가 조금 작아지고 사방에 숨 쉴 자리가 생김. 1:1처럼 세로가 넉넉한 창과 세로 화면은 그대로
+  const PAD_Y=PORTRAIT?36:125;K=Math.min(vw/W,vh/(H+PAD_Y*2));
+  const ox=(vw-W*K)/2,oy=(vh-H*K)/2;
+  stage.style.transform=`translate(${ox}px,${oy}px) scale(${K})`;
+  // 제목·부제목: 창 맨 위와 아래 패널(가로) / 나무(세로) 사이의 위아래 가운데
+  const hd=document.querySelector('header'),topEdge=-oy/K,limit=160;
+  hd.style.top=(PORTRAIT?Math.max(topEdge+4,200+crownTop-34-hd.offsetHeight):Math.max(topEdge+4,(topEdge+limit-hd.offsetHeight)/2))+'px';
+  const h1=$('title'),titleMid=parseFloat(hd.style.top)+h1.offsetTop+h1.offsetHeight/2;
+  // 도움말 버튼: 화면 비율과 상관없이 창의 위쪽·오른쪽 끝에서 같은 간격(도움말 글자 '도' 한 글자 폭 = 21px)
+  const HELP_GAP=21;
+  $('helpWrap').style.top=(topEdge+HELP_GAP)+'px';
+  const helpRight=HELP_GAP-ox/K;$('helpWrap').style.right=helpRight+'px';
+  $('helpPop').dataset.base=PORTRAIT?'':(W-helpRight-830);$('helpPop').style.maxWidth=PORTRAIT?'':(W-helpRight-830)+'px';
+  fitHelp();
+  const gy=oy+groundStageY()*K;
+  const gd=$('ground');gd.style.top=gy+'px';
+  gd.style.backgroundImage=`url("${GRASS_FIELD}"),${GRASS_GRAD}`;gd.style.backgroundSize=`${460*K}px ${300*K}px,100% 100%`;
+  const ge=$('grassEdge');ge.style.backgroundImage=`url("${GRASS_EDGE}")`;ge.style.backgroundSize=`${520*K}px ${34*K}px`;ge.style.height=(34*K)+'px';ge.style.top=(gy-26*K)+'px';
+  const hh=Math.max(60,150*K);const hills=$('hills');hills.style.top=(gy-hh+4)+'px';hills.style.height=hh+'px';
+  fitExplain();
+}
+
+/* ================= 슬라이더 ================= */
+const st={phase:'start',sel:{...DEFAULT},baked:0,pick:0,explainOpen:true,raf:0};
+const inputs={};
+function buildSliders(){
+  const box=$('sliders');
+  const head=document.createElement('div');head.className='shead';
+  head.innerHTML=`<div class="ticks">${STEP_LV.map((n,i)=>`<span style="left:calc(18px + ${i} * (100% - 36px) / 3)"><b>${n}</b>${STEP_WORD[i]}</span>`).join('')}</div>`;
+  box.appendChild(head);
+  for(const v of VARS){
+    const row=document.createElement('div');row.className='srow';
+    row.innerHTML=`<div class="sname wtxt">${v.name}<div class="tip nameTip"><b class="unit">${v.unit[0]}</b> : ${v.unit[2]}<br><span class="def">${v.unit[1]}</span></div></div><div class="sbox"><input type="range" min="1" max="4" step="1" aria-label="${v.name}"></div><div class="sdesc wtxt"><div class="dbox"><span class="term"></span><span class="easy"></span></div></div>`;
+    box.appendChild(row);
+    const inp=row.querySelector('input');inputs[v.k]={inp,term:row.querySelector('.term'),easy:row.querySelector('.easy'),box:row.querySelector('.dbox'),v};
+    inp.addEventListener('input',()=>{if(locked()){inp.value=st.sel[v.k];warn();return;}st.sel[v.k]=+inp.value;showDesc(v.k);});
+  }
+  $('sLock').addEventListener('pointerdown',e=>{e.preventDefault();warn();});
+  // 슬라이더 줄 어디든(막대 위아래·설명 글씨 쪽 포함) 누르거나 끌면 가장 가까운 단계로, 마우스 휠로는 한 단계씩
+  const setStep=(k,v)=>{const o=inputs[k];v=Math.max(1,Math.min(4,v));if(+o.inp.value===v)return;o.inp.value=v;o.inp.dispatchEvent(new Event('input'));};
+  const stepAt=(k,x)=>{const r=inputs[k].inp.getBoundingClientRect(),th=36*K;return Math.round((x-r.left-th/2)/((r.width-th)/3))+1;};
+  for(const k in inputs){
+    const row=inputs[k].inp.closest('.srow');let acc=0,dragging=false;
+    row.addEventListener('wheel',e=>{e.preventDefault();if(locked()){warn();return;}acc+=e.deltaY;if(Math.abs(acc)>=40||Math.abs(e.deltaY)>=100){setStep(k,st.sel[k]+Math.sign(acc));acc=0;}},{passive:false});
+    row.addEventListener('pointerdown',e=>{
+      if(e.target.closest('.sname')||e.target===inputs[k].inp)return;
+      if(locked()){warn();return;}
+      dragging=true;row.setPointerCapture(e.pointerId);setStep(k,stepAt(k,e.clientX));e.preventDefault();
+    });
+    row.addEventListener('pointermove',e=>{if(dragging)setStep(k,stepAt(k,e.clientX));});
+    const end=()=>{dragging=false;};row.addEventListener('pointerup',end);row.addEventListener('pointercancel',end);
+  }
+}
+function showDesc(k){const o=inputs[k],i=st.sel[k]-1;o.term.textContent=o.v.terms[i][0];o.easy.textContent=o.v.terms[i][1];
+  o.box.style.left=`calc(18px + ${i} * (100% - 36px) / 3)`;
+  o.box.style.textAlign=i===0?'left':i===3?'right':'center';
+  o.box.style.transform=i===0?'translateX(-18px)':i===3?'translateX(calc(-100% + 18px))':'translateX(-50%)';}
+function syncSliders(){for(const k in inputs){inputs[k].inp.value=st.sel[k];inputs[k].inp.disabled=locked();showDesc(k);}}
+const locked=()=>st.phase!=='start';
+let warnT=0;
+function warn(){const w=$('warn');w.classList.remove('show');void w.offsetWidth;w.classList.add('show');clearTimeout(warnT);warnT=setTimeout(()=>w.classList.remove('show'),2000);}
+
+/* ================= 일수 선택기 ================= */
+const PK={max:30,dis:false,acc:0};
+function pkBuild(max){PK.max=max;const l=$('pkList');l.innerHTML='';for(let i=0;i<=max;i++){const d=document.createElement('div');d.className='pk-item';d.textContent=i;d.dataset.v=i;l.appendChild(d);}pkSet(0);}
+function pkSet(v){
+  v=Math.max(0,Math.min(PK.max,v));st.pick=v;
+  $('pkList').style.transform=`translateY(${(1-v)*54}px)`;
+  [...$('pkList').children].forEach((c,i)=>c.classList.toggle('sel',i===v));
+  $('bakeBtn').disabled=v<1||st.phase==='baking'||st.baked>=30;
+}
+function pkInit(){
+  const p=$('picker');
+  p.addEventListener('wheel',e=>{e.preventDefault();if(PK.dis)return;PK.acc+=e.deltaY;while(Math.abs(PK.acc)>=40){const s=Math.sign(PK.acc);pkSet(st.pick+s);PK.acc-=s*40;}if(Math.abs(e.deltaY)>=100)PK.acc=0;},{passive:false});
+  let drag=null;
+  // 휴대폰(손가락): 조금만 밀어도 잘 넘어가고, 휙 밀면 관성으로 여러 칸이 훅 넘어감
+  let fling=0;
+  p.addEventListener('pointerdown',e=>{if(PK.dis)return;cancelAnimationFrame(fling);p.focus();const touch=e.pointerType==='touch';drag={y:e.clientY,v:st.pick,moved:false,target:e.target,touch,step:touch?24:54,ly:e.clientY,lt:performance.now(),vel:0};p.setPointerCapture(e.pointerId);$('pkList').classList.add('drag');});
+  p.addEventListener('pointermove',e=>{if(!drag)return;const dy=(e.clientY-drag.y)/K;if(Math.abs(dy)>4)drag.moved=true;pkSet(drag.v-Math.round(dy/drag.step));
+    const now=performance.now(),dt=now-drag.lt;if(dt>0){drag.vel=drag.vel*.6+((e.clientY-drag.ly)/K/dt)*.4;drag.ly=e.clientY;drag.lt=now;}});
+  const up=()=>{if(!drag)return;$('pkList').classList.remove('drag');if(!drag.moved&&drag.target.dataset&&drag.target.dataset.v!==undefined)pkSet(+drag.target.dataset.v);
+    if(drag.touch&&drag.moved&&Math.abs(drag.vel)>.25){ // 손을 뗄 때 빠르면 그 방향으로 몇 칸 더 굴러감
+      let v=-drag.vel*1.6,acc=0,last=performance.now();
+      const roll=now=>{const dt=now-last;last=now;acc+=v*dt/24;v*=Math.pow(.92,dt/16);
+        while(Math.abs(acc)>=1){const s=Math.sign(acc);pkSet(st.pick+s);acc-=s;}
+        if(Math.abs(v)>.02)fling=requestAnimationFrame(roll);};
+      fling=requestAnimationFrame(roll);}
+    drag=null;};
+  p.addEventListener('pointerup',up);p.addEventListener('pointercancel',up);
+  p.addEventListener('keydown',e=>{if(PK.dis)return;if(e.key==='ArrowDown'){e.preventDefault();pkSet(st.pick+1);}if(e.key==='ArrowUp'){e.preventDefault();pkSet(st.pick-1);}});
+}
+function pkDisable(d){PK.dis=d;$('picker').classList.toggle('dis',d);}
+
+/* ================= 화면 단계 ================= */
+function setTitle(t,pop){const h=$('title');h.textContent=t;if(pop){h.classList.remove('pop');void h.offsetWidth;h.classList.add('pop');}}
+/* ===== 다람쥐 ===== */
+let sqT=0,sqAnim=null;
+function hideSquirrel(){const q=$('squirrel');if(sqAnim){sqAnim.cancel();sqAnim=null;}q.style.opacity='0';}
+// 다람쥐는 나뭇잎을 건드려 떨어뜨린 뒤 5초가 지나면 나타남 (모든 화면). 화면이 바뀌면 기다리던 다람쥐는 취소
+function scheduleSquirrel(){clearTimeout(sqT);hideSquirrel();}
+function squirrelAfterLeaf(){clearTimeout(sqT);sqT=setTimeout(showSquirrel,5000);}
+function showSquirrel(){
+  if(document.hidden||st.phase==='baking')return;
+  if(sqAnim){sqAnim.cancel();sqAnim=null;}
+  const q=$('squirrel'),R=Math.random,heal=stage.classList.contains('heal');
+  const sr=stage.getBoundingClientRect();
+  const toStage=(sx,sy)=>[(sx-sr.left)/K,(sy-sr.top)/K];
+  // 나무 줄기(그림 좌표) → 화면 좌표 → 무대 좌표
+  const m=$('sway').getScreenCTM();if(!m)return;
+  const svgPt=(x,y)=>{const p=TREE.createSVGPoint();p.x=x;p.y=y;const s=p.matrixTransform(m);return toStage(s.x,s.y);};
+  // 숨어 있을 잎 덩어리: 줄기 가까운 아래쪽 잎 덩어리 중 하나
+  const cand=CL.filter(c=>c.shown&&!healDropped.has(c)&&Math.abs(c.x-380)<150&&c.y>crownTop+60);
+  if(!cand.length)return;
+  const hide=cand[Math.floor(R()*cand.length)];
+  const [hx,hy]=svgPt(hide.x,hide.y);
+  const [tx,ty]=svgPt(392,470);           // 줄기 위쪽
+  const [bx,by]=svgPt(392,600);           // 줄기 아래(땅 가까이)
+  // 땅에서 다닐 수 있는 가로 범위: 나무 쪽 잔디만 (설명 창·슬라이더 창 쪽 금지)
+  let x0,x1;
+  if(PORTRAIT){x0=50;x1=900-50;}
+  else if(heal){x0=70;x1=1600-70;}
+  else{x0=50;x1=800-10;}
+  const gy=groundStageY(),base=gy-30+(R()-.5)*16;   // 지평선 위아래로 조금씩만
+  const dir=R()<.5?-1:1,flip=dir<0?-1:1;
+  const at=(x,y,extra,op,off)=>({transform:`translate(${x-42}px,${y-36}px) ${extra}`,opacity:op,offset:off});
+  const f=[];
+  // 0~1초: 잎 속에서 빼꼼
+  f.push(at(hx,hy,'scale(.35)',0,0));
+  f.push(at(hx,hy-6,'scale(.8)',1,.06));
+  f.push(at(hx+6,hy-10,'scale(.8) rotate(-8deg)',1,.11));
+  f.push(at(hx,hy-6,'scale(.8) rotate(6deg)',1,.15));
+  // 1~3초: 줄기를 타고 머리부터 쪼르르 내려옴
+  f.push(at(tx,ty,'scale(.8) rotate(80deg)',1,.24));
+  f.push(at((tx+bx)/2,(ty+by)/2,'scale(.8) rotate(84deg)',1,.33));
+  f.push(at(bx,by,'scale(.8) rotate(80deg)',1,.42));
+  // 땅에 내려와 방향을 잡음
+  f.push(at(bx,base,`scaleX(${flip}) scale(.85)`,1,.47));
+  // 3.3~6.5초: 오른쪽 또는 왼쪽으로 콩콩
+  let x=bx;const hops=5,start=.47,end=.92;
+  for(let h=0;h<hops;h++){
+    const nx=Math.max(x0,Math.min(x1,x+(55+R()*35)*dir)),dy=(R()-.5)*8;
+    const o0=start+(end-start)*(h+.5)/hops,o1=start+(end-start)*(h+1)/hops;
+    f.push(at((x+nx)/2,base-20-R()*10,`scaleX(${flip}) scale(.85)`,1,o0));
+    f.push(at(nx,base+dy,`scaleX(${flip}) scale(.85)`,1,o1));
+    x=nx;
+  }
+  // 6.5~7초: 사라짐
+  f.push(at(x,base,`scaleX(${flip}) scale(.85)`,0,1));
+  q.style.opacity='1';
+  sqAnim=q.animate(f,{duration:7000,easing:'ease-in-out'});
+  sqAnim.onfinish=()=>{q.style.opacity='0';sqAnim=null;};
+}
+function setPhase(ph){
+  scheduleSquirrel();
+  st.phase=ph;
+  stage.classList.toggle('locked',ph!=='start');
+  stage.classList.toggle('res',ph==='result');
+  const N=st.baked,M=30-N;
+  $('ctrl').classList.toggle('off',ph==='result');
+  $('resRow').classList.toggle('off',ph!=='result');
+  $('bPick').hidden=ph==='baked'||ph==='result';
+  $('bAsk').hidden=ph!=='baked';
+  $('qText').textContent=(ph==='more'||(ph==='baking'&&st.bakeStart>0))?'같은 날씨로 더 구워요':'1~30일 중 며칠 구우실 건가요?';
+  pkDisable(ph==='baking');
+  if(ph==='start'){setTitle('단풍나무 굽기');$('subtitle').textContent='날씨를 반죽해서 단풍나무를 구워 보세요!';}
+  if(ph==='baking'){setTitle('굽는 중');}
+  if(ph==='baked'||ph==='more'){if(ph==='baked')setTitle('♨️ 갓 구운 단풍나무 ♨️',true);$('subtitle').textContent=`지금까지 구운 날 ${N}일 · 남은 날 ${M}일`;}
+  if(ph==='baked'){
+    // 30일을 다 채운 경우(한 번에 굽든 나눠 굽든) 안내를 바꿈
+    const full=M<=0;
+    $('askText').textContent=full?'30일 모두 구웠어요.':'지금 완료해도 좋고, 조금 더 구워도 좋아요';
+    $('moreText').textContent=full?'결과를 확인해 보세요!':`${M}일 더 구울 수 있어요!`;
+    $('moreBtn').disabled=M<=0;}
+  if(ph==='more')pkBuild(M);
+  if(ph==='result'){const x=stateAt(params(st.sel),N);setTitle(titleOf(x).text,true);$('subtitle').textContent='';}
+  // 슬라이더 창 제목: 처음 화면은 '반죽을 만들어요!', 굽기 시작한 뒤에는 반죽이 하나뿐이고 더 구울 수 있다는 안내
+  const baking=ph==='baking'||ph==='baked'||ph==='more';
+  $('ctrlTitle').textContent=baking?'단풍나무를 굽는 중이에요!':'반죽을 만들어요!';
+  $('ctrlSub').textContent=!baking?'기본 반죽은 우리나라의 평소 가을 날씨예요':ph==='baked'?(st.baked>=30?'같은 반죽으로 30일을 모두 구웠어요':'갓 구운 단풍나무를 살펴보고 더 구울지 정해요'):'같은 반죽이라도 더 구울수록 단풍이 달라져요';
+  syncSliders();
+  $('bakeBtn').disabled=st.pick<1||ph==='baking'||st.baked>=30;
+}
+
+/* ================= 굽기 ================= */
+function bake(){
+  const days=st.pick;if(days<1||st.phase==='baking'||st.baked+days>30)return;
+  const p=params(st.sel),start=st.baked;st.bakeStart=start;
+  setPhase('baking');
+  buildWeather(st.sel);setWeather('on');
+  $('glow').classList.add('on');$('glow').style.opacity='';$('haze').classList.add('on');setSway('wind',st.sel.w);
+  $('subtitle').textContent=`${start+1}일째 굽는 중…`;
+  const t0=performance.now();let done=0;
+  const tick=now=>{
+    const target=Math.min(days,Math.floor((now-t0)/100));
+    while(done<target){done++;applyState(stateAt(p,start+done),true);}
+    if(done<days){$('subtitle').textContent=`${start+done+1}일째 굽는 중…`;st.raf=requestAnimationFrame(tick);}
+    else finishBake(start+days);
+  };
+  st.raf=requestAnimationFrame(tick);
+}
+function finishBake(N){
+  st.bakes=(st.bakes||0)+1;
+  st.baked=N;st.pick=0;
+  $('glow').classList.remove('on');$('glow').style.opacity='0';$('haze').classList.remove('on');setSway('idle');
+  steam(2600);
+  setPhase('baked');
+}
+function showResult(){
+  const x=stateAt(params(st.sel),st.baked);
+  $('eWeather').textContent=weatherSentence(st.sel,st.baked);
+  $('eLook').textContent=lookSentence(x);
+  $('eOne').textContent=ONE_LINE[category(x)];
+  $('expSub').textContent=resultSub(x);
+  $('ePrin').innerHTML=principles(x,st.sel).map(p=>`<li data-id="${p.id}">${richHTML(p.text)}</li>`).join('');
+  st.explainOpen=true;setExplain(true);
+  setPhase('result');setWeather('ghost');steam(1800);
+  fitExplain();
+}
+function setExplain(open){
+  scheduleSquirrel();
+  st.explainOpen=open;
+  $('explain').classList.toggle('off',!open||st.phase!=='result'&&false);
+  stage.classList.toggle('heal',!open);
+  $('healBtn').hidden=!open;$('readBtn').hidden=open;
+  layout();
+}
+function resultSub(x){const t=TITLES[category(x)];return `다섯 가지 단풍나무 중 '${t[0]} ${t[1]} 단풍나무'가 만들어졌어요`;}
+function fitExplain(){
+  const pan=$('explain'),inn=$('expIn');if(pan.classList.contains('off')&&st.phase!=='result')return;
+  let fs=22;inn.style.fontSize=fs+'px';
+  const cs=getComputedStyle(pan),room=()=>pan.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  while(inn.scrollHeight>room()&&fs>11){fs-=0.5;inn.style.fontSize=fs+'px';}
+}
+/* ===== 나무 놀이(모든 화면): 나무를 누르면 누른 자리의 잎이 후드득 떨어지고, 5초 뒤 그 자리에 다시 돋아남 (결과 값은 바뀌지 않는 연출) ===== */
+const healDropped=new Set();
+function healTap(e){
+  const pt=TREE.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
+  const sway=$('sway'),m=sway.getScreenCTM();if(!m)return;
+  const q=pt.matrixTransform(m.inverse());
+  let best=null,bd=1e9;
+  for(const cl of CL){if(!cl.shown||healDropped.has(cl))continue;const d=Math.hypot(cl.x-q.x,cl.y-q.y)-cl.r;if(d<bd){bd=d;best=cl;}}
+  if(!best||bd>40)return; // 잎 덩어리 근처(조금 떨어져도 OK)를 누르면 반응
+  e.preventDefault();
+  const c=leafColor(curState);
+  healDropped.add(best);
+  best.g.classList.remove('regrow');best.g.style.opacity='0';best.g.style.transform='translateY(18px) scale(.6)';
+  dropLeaf(best,c);dropLeaf(best,c); // 후드득: 잎 여러 장이 떨어짐
+  squirrelAfterLeaf();
+  best.regrowT=setTimeout(()=>{
+    healDropped.delete(best);
+    if(!best.shown)return;
+    best.g.classList.add('regrow');best.g.style.opacity='1';best.g.style.transform='';
+    setTimeout(()=>best.g.classList.remove('regrow'),1300);
+  },5000);
+}
+TREE.addEventListener('pointerdown',healTap);
+function healRestoreAll(){healDropped.forEach(cl=>{clearTimeout(cl.regrowT);if(cl.shown){cl.g.style.opacity='1';cl.g.style.transform='';}});healDropped.clear();}
+function reset(){
+  healRestoreAll();
+  cancelAnimationFrame(st.raf);
+  st.sel={...DEFAULT};st.baked=0;st.pick=0;st.bakeStart=0;st.bakes=0;
+  CL.forEach(c=>{c.shown=true;c.g.style.opacity='1';c.g.style.transform='';});
+  applyState({chl:0,red:0,leaves:100},false);
+  $('fallG').innerHTML='';$('sparkG').innerHTML='';$('steam').innerHTML='';clearInterval(steamTimer);
+  setWeather('off');$('saveMenu').hidden=true;
+  stage.classList.remove('heal');$('explain').classList.add('off');
+  $('healBtn').hidden=false;$('readBtn').hidden=true;
+  pkBuild(30);setPhase('start');layout();
+}
+
+/* ================= 이미지 저장 ================= */
+const GRASS_IMG={field:Object.assign(new Image(),{src:GRASS_FIELD}),edge:Object.assign(new Image(),{src:GRASS_EDGE})};
+const FONT='"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+function treeImage(){
+  return new Promise((res,rej)=>{
+    const c=TREE.cloneNode(true);c.querySelector('#fallG').innerHTML='';c.querySelector('#sparkG').innerHTML='';
+    c.setAttribute('xmlns',NS);c.removeAttribute('id');
+    const img=new Image();img.onload=()=>res(img);img.onerror=rej;
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(c));
+  });
+}
+function drawBackdrop(g,gy){
+  let gr=g.createLinearGradient(0,0,0,900);gr.addColorStop(0,'#b3e2fb');gr.addColorStop(.45,'#cbdefc');gr.addColorStop(1,'#e0d5fb');
+  g.fillStyle=gr;g.fillRect(0,0,1600,900);
+  // 하늘의 맑은 부분·살짝 흐린 부분 (화면과 같은 배치)
+  for(const [cx,cy,rx,ry,col,a] of [[.18,.14,.45,.38,'196,240,255',.85],[.16,.05,.26,.24,'255,246,186',.55],[.72,.22,.40,.30,'206,212,232',.55],[.55,.48,.50,.34,'214,236,255',.7],[.12,.58,.42,.30,'214,206,232',.5],[.88,.66,.46,.30,'232,222,255',.7]]){
+    g.save();g.translate(cx*1600,cy*900);g.scale(rx*1600,ry*900);const rg=g.createRadialGradient(0,0,0,0,0,1);rg.addColorStop(0,`rgba(${col},${a})`);rg.addColorStop(.7,`rgba(${col},0)`);g.fillStyle=rg;g.fillRect(-1,-1,2,2);g.restore();
+  }
+  // 날씨 잔상 (흐릿하게)
+  const s=st.sel.s;
+  g.save();g.globalAlpha=0.5;
+  g.fillStyle='#9aa8bb';g.globalAlpha=0.5*[.5,.28,.08,0][s-1];g.fillRect(0,0,1600,900);
+  g.globalAlpha=0.5;g.filter='blur(6px)';
+  if(s===4){const sg=g.createRadialGradient(200,140,0,200,140,220);sg.addColorStop(0,'rgba(255,251,232,1)');sg.addColorStop(1,'rgba(255,240,205,0)');g.fillStyle=sg;g.fillRect(0,0,600,500);}
+  const R=mulberry32(s*10+st.sel.w),n=[10,7,3,1][s-1];
+  g.fillStyle=s===1?'#e8ecf2':'#ffffff';
+  for(let i=0;i<n;i++){const x=R()*1600,y=40+R()*300,w=180+R()*200;
+    g.beginPath();g.ellipse(x,y,w/2,w*0.15,0,0,7);g.ellipse(x-w*0.1,y-w*0.12,w*0.22,w*0.2,0,0,7);g.ellipse(x+w*0.12,y-w*0.08,w*0.17,w*0.15,0,0,7);g.fill();}
+  if(st.sel.r===4){g.strokeStyle='rgba(150,180,230,.7)';g.lineWidth=2;for(let i=0;i<120;i++){const x=R()*1600,y=R()*900;g.beginPath();g.moveTo(x,y);g.lineTo(x-6,y+28);g.stroke();}}
+  g.restore();
+  // 언덕과 땅
+  g.save();g.translate(0,gy-150);g.scale(1,150/200);
+  const hill=(d,c0,c1,c2,edge)=>{const p=new Path2D(d),hg=g.createLinearGradient(0,40,0,200);hg.addColorStop(0,c0);hg.addColorStop(.5,c1);hg.addColorStop(1,c2);g.fillStyle=hg;g.fill(p);g.lineWidth=2;g.strokeStyle=edge;g.stroke(p);};
+  g.filter='blur(6px)';hill('M0 120 C180 40 330 60 470 110 S760 50 930 95 S1250 40 1600 105 V200 H0Z','rgba(228,219,255,.25)','rgba(221,211,253,.55)','rgba(211,202,248,.8)','rgba(164,157,224,.06)');
+  g.filter='none';hill('M0 160 C220 105 420 120 600 150 S930 100 1130 140 S1420 110 1600 150 V200 H0Z','#eaf8ec','#cdeed8','#b4e1c4','rgba(147,199,168,.06)');
+  g.restore();
+  gr=g.createLinearGradient(0,gy,0,900);gr.addColorStop(0,'#e2f6e2');gr.addColorStop(.2,'#d0eed6');gr.addColorStop(.6,'#c1e7cc');gr.addColorStop(1,'#b3dfc3');g.fillStyle=gr;g.fillRect(0,gy,1600,900-gy);
+  if(GRASS_IMG.field.complete){g.save();g.translate(0,gy);g.fillStyle=g.createPattern(GRASS_IMG.field,'repeat');g.fillRect(0,0,1600,900-gy);g.restore();}
+  if(GRASS_IMG.edge.complete){g.save();g.translate(0,gy-26);g.fillStyle=g.createPattern(GRASS_IMG.edge,'repeat-x');g.fillRect(0,0,1600,34);g.restore();}
+}
+function shadowText(g,text,x,y,size,sh){
+  g.font=`900 ${size}px ${FONT}`;g.textAlign='center';g.textBaseline='top';
+  g.save();g.fillStyle=sh;g.shadowColor=sh;g.shadowBlur=8;g.lineJoin='round';g.strokeStyle=sh;g.lineWidth=5;g.strokeText(text,x,y);g.fillText(text,x,y);g.restore();
+  g.fillStyle='#fff';g.fillText(text,x,y);
+}
+function layoutRich(g,blocks,width,fs){
+  // blocks: [{type:'h'|'p'|'li', segs:[{t,b}]}] -> lines
+  const out=[];let y=0;const lh=fs*1.5;
+  for(const bl of blocks){
+    const size=bl.type==='h'?fs*1.12:fs,indent=bl.type==='li'?fs*1.2:0;
+    const toks=[];bl.segs.forEach(s=>s.t.split(/(\s+)/).forEach(t=>{if(t)toks.push({t,b:s.b||bl.type==='h'});}));
+    let line=[],w=0;const maxW=width-indent;const lines=[];
+    const meas=tk=>{g.font=`${tk.b?900:400} ${size}px ${FONT}`;return g.measureText(tk.t).width;};
+    for(const tk of toks){const tw=meas(tk);if(w+tw>maxW&&line.length&&!/^\s+$/.test(tk.t)){lines.push(line);line=[];w=0;}if(!line.length&&/^\s+$/.test(tk.t))continue;line.push({...tk,w:tw});w+=tw;}
+    if(line.length)lines.push(line);
+    lines.forEach((ln,i)=>{out.push({y,ln,size,x:indent,bullet:bl.type==='li'&&i===0,hl:bl.type!=='h'});y+=size*1.5;});
+    y+=bl.type==='h'?fs*0.05:bl.type==='li'?fs*0.3:fs*0.7;
+  }
+  return {lines:out,h:y};
+}
+async function saveImage(withText){
+  $('saveMenu').hidden=true;
+  const cv=document.createElement('canvas');cv.width=1600;cv.height=900;const g=cv.getContext('2d');
+  const gy=withText?760:800;drawBackdrop(g,gy);
+  let img;try{img=await treeImage();}catch(e){alert('이미지를 만들지 못했어요.');return;}
+  const x=stateAt(params(st.sel),st.baked),title=titleOf(x);
+  if(withText){
+    g.drawImage(img,30,140,760,670);
+    shadowText(g,title.text,800,24,64,'#3f86c0');
+    const px=830,py=160,pw=730,ph=734;
+    g.save();g.fillStyle='rgba(255,255,255,.84)';g.shadowColor='rgba(100,90,170,.18)';g.shadowBlur=24;g.beginPath();g.roundRect(px,py,pw,ph,34);g.fill();g.restore();
+    g.textAlign='center';g.textBaseline='top';g.fillStyle='#41407a';g.font=`700 32px ${FONT}`;g.fillText('단풍나무가 구워졌어요!',px+pw/2,py+18);g.fillStyle='#5c5a92';g.font=`700 21px ${FONT}`;g.fillText(resultSub(x),px+pw/2,py+64);g.fillStyle='rgba(110,108,160,.18)';g.fillRect(px+34,py+110,pw-68,2);
+    const P=s=>[{t:s}],rich=s=>s.split('**').map((t,i)=>({t,b:i%2===1}));
+    const blocks=[{type:'h',segs:P('🌤️ 고른 날씨')},{type:'p',segs:P(weatherSentence(st.sel,st.baked))},{type:'h',segs:P('🍁 단풍 모습')},{type:'p',segs:P(lookSentence(x))},{type:'h',segs:P('💡 한 줄 원리')},{type:'p',segs:P(ONE_LINE[category(x)])},{type:'h',segs:P('🔬 자세한 과학 원리')},...principles(x,st.sel).map(p=>({type:'li',segs:rich(p.text)}))];
+    let fs=23,L;do{L=layoutRich(g,blocks,pw-68,fs);fs-=0.5;}while(L.h>ph-154&&fs>10);
+    g.textAlign='left';g.textBaseline='top';
+    for(const l of L.lines){
+      let cx=px+34+l.x;const cy=py+132+l.y;
+      if(l.bullet){g.fillStyle='#2e2e36';g.font=`400 ${l.size}px ${FONT}`;g.fillText('•',px+34+l.size*0.3,cy);}
+      for(const tk of l.ln){
+        if(tk.b&&l.hl){g.fillStyle='rgba(247,220,123,.6)';g.fillRect(cx,cy+l.size*0.85,tk.w,l.size*0.5);}
+        g.font=`${tk.b?900:400} ${l.size}px ${FONT}`;g.fillStyle=tk.b?'#1d1d24':'#2e2e36';g.fillText(tk.t,cx,cy);cx+=tk.w;
+      }
+    }
+  }else{
+    const th=622-crownTop,s=720/th,w=760*s,h=670*s;
+    g.drawImage(img,800-380*s,gy+12-622*s,w,h);
+  }
+  const d=new Date(),pad=n=>String(n).padStart(2,'0');
+  const name=`단풍나무굽기_${title.plain}_${withText?'설명포함':'나무'}_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.png`;
+  cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);},'image/png');
+}
+
+/* ================= 이벤트 ================= */
+function bump(b){b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump');}
+document.addEventListener('click',e=>{const b=e.target.closest('.btn');if(b&&!b.disabled)bump(b);
+  if(!e.target.closest('#saveMenu')&&!e.target.closest('#saveBtn'))$('saveMenu').hidden=true;});
+function fitHelp(){
+  const p=$('helpPop');if(p.hidden)return;
+  let fs=PORTRAIT?21:20;p.style.fontSize=fs+'px';if(PORTRAIT)return;
+  const wrapTop=parseFloat($('helpWrap').style.top)||0,panelTop=160;
+  const widen=()=>{const base=+p.dataset.base;p.style.maxWidth=base+'px';const extra=p.scrollWidth-p.clientWidth;if(extra>0)p.style.maxWidth=(base+extra+2)+'px';};
+  widen();
+  while(wrapTop+52+p.offsetHeight>panelTop-4&&fs>10){fs-=0.5;p.style.fontSize=fs+'px';widen();}
+}
+$('helpBtn').onclick=()=>{$('helpPop').hidden=!$('helpPop').hidden;fitHelp();};
+$('helpX').onclick=()=>{$('helpPop').hidden=true;};
+$('bakeBtn').onclick=bake;
+$('doneBtn').onclick=showResult;
+$('moreBtn').onclick=()=>{if(st.baked<30)setPhase('more');};
+$('healBtn').onclick=()=>setExplain(false);
+let toastT=0;
+function toast(){const t=$('toast');t.classList.remove('show');void t.offsetWidth;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);}
+$('readBtn').onclick=()=>{setExplain(true);fitExplain();};
+$('homeBtn').onclick=reset;
+$('saveBtn').onclick=()=>{$('saveMenu').hidden=!$('saveMenu').hidden;};
+$('saveTree').onclick=()=>saveImage(false);
+$('saveText').onclick=()=>saveImage(true);
+addEventListener('resize',layout);
+
+/* 시작 */
+buildTree();buildHaze();buildSliders();pkInit();
+applyState({chl:0,red:0,leaves:100},false);
+pkBuild(30);setPhase('start');layout();
+setTimeout(flutter,1500);
+// 검증용(화면에는 영향 없음)
+/* ===== 터치 화면: 한 번 탭하면 안내 말풍선, 말풍선이 떠 있을 때 한 번 더 탭하면 실행 ===== */
+(()=>{
+  const root=document.documentElement;
+  if(matchMedia('(hover: none)').matches||matchMedia('(pointer: coarse)').matches)root.classList.add('touch');
+  // 처음 손가락으로 누르는 순간에도 터치 화면으로 인식
+  addEventListener('pointerdown',e=>{if(e.pointerType==='touch')root.classList.add('touch');},true);
+  addEventListener('touchstart',()=>root.classList.add('touch'),{capture:true,passive:true});
+  const tipOf=b=>b.nextElementSibling&&b.nextElementSibling.classList.contains('tip')?b.nextElementSibling:null;
+  let open=null,timer=0;
+  const hide=()=>{if(open)open.classList.remove('show');open=null;clearTimeout(timer);};
+  const show=t=>{hide();open=t;t.classList.add('show');timer=setTimeout(hide,3000);};
+  const GUARD=['healBtn','readBtn','saveBtn','homeBtn','bakeBtn'];
+  document.addEventListener('click',e=>{
+    if(!root.classList.contains('touch'))return; // PC(마우스)는 지금처럼 마우스 올리기
+    const b=e.target.closest('button');
+    if(b&&GUARD.includes(b.id)){
+      if(b.id==='bakeBtn'&&st.phase!=='start'){hide();return;} // 굽기 안내는 처음 화면에서만
+      if(b.id==='saveBtn'&&!$('saveMenu').hidden){hide();return;}
+      const t=tipOf(b);
+      if(t&&open!==t){e.preventDefault();e.stopPropagation();show(t);return;}
+      hide();return;
+    }
+    const n=e.target.closest('.sname');
+    if(n){const t=n.querySelector('.tip');if(t){open===t?hide():show(t);}return;}
+    hide();
+  },true);
+})();
+window.__maple={params,stateAt,category,weatherSentence,lookSentence,principles,titleOf,ONE_LINE};
+})();
+</script>
+</body>
+</html>
